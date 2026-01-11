@@ -87,6 +87,7 @@ export type Database = {
           debates_this_month: number
           month_reset_date: string
           created_at: string
+          role: string | null
         }
         Insert: {
           id: string
@@ -97,6 +98,7 @@ export type Database = {
           debates_this_month?: number
           month_reset_date?: string
           created_at?: string
+          role?: string | null
         }
         Update: {
           id?: string
@@ -107,6 +109,7 @@ export type Database = {
           debates_this_month?: number
           month_reset_date?: string
           created_at?: string
+          role?: string | null
         }
       }
     }

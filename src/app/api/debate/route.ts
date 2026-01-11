@@ -7,22 +7,29 @@
 import { NextRequest } from 'next/server';
 import { streamChat, type Message } from '@/lib/openrouter';
 import { MODELS, type ModelKey } from '@/lib/models';
+import { ARENA_MODES, type ArenaMode } from '@/lib/modes';
 import type { DebateStreamEvent, PromptPitProfile } from '@/lib/types';
 import { createServerSupabaseClient, createServiceRoleClient } from '@/lib/supabase';
 import { canStartDebate, getDebateLimit } from '@/lib/pricing';
 
 /**
  * Generates a system prompt with optional context from previous debate rounds
+ * Uses mode-specific prompts for different arena types
  */
-function getSystemPrompt(previousRounds?: Array<{prompt: string; responses: Record<string, string>}>): string {
-  const basePrompt = 'You are participating in a debate. Provide a clear, well-reasoned response to the topic. Be concise but thorough. Aim for 2-3 paragraphs.';
+function getSystemPrompt(
+  mode: ArenaMode = 'debate',
+  previousRounds?: Array<{prompt: string; responses: Record<string, string>}>
+): string {
+  // Get mode-specific base prompt
+  const modeConfig = ARENA_MODES[mode];
+  const basePrompt = modeConfig?.systemPrompt || 'You are participating in a debate. Provide a clear, well-reasoned response to the topic. Be concise but thorough. Aim for 2-3 paragraphs.';
 
   if (!previousRounds || previousRounds.length === 0) {
     return basePrompt;
   }
 
   // Build context from previous rounds
-  let context = basePrompt + '\n\nThis is a continuation of an ongoing debate. Here is what was discussed previously:\n\n';
+  let context = basePrompt + '\n\nThis is a continuation of an ongoing session. Here is what was discussed previously:\n\n';
 
   previousRounds.forEach((round, idx) => {
     context += '--- Round ' + (idx + 1) + ' ---\n';
@@ -40,6 +47,7 @@ function getSystemPrompt(previousRounds?: Array<{prompt: string; responses: Reco
 interface DebateRequest {
   prompt: string;
   models?: string[];
+  mode?: ArenaMode;
   previousRounds?: Array<{
     prompt: string;
     responses: Record<string, string>;
@@ -55,7 +63,7 @@ function validateRequest(body: unknown): { valid: true; data: DebateRequest } | 
     return { valid: false, error: 'Request body must be an object' };
   }
 
-  const { prompt, models, previousRounds, roundNumber } = body as Record<string, unknown>;
+  const { prompt, models, mode, previousRounds, roundNumber } = body as Record<string, unknown>;
 
   if (!prompt || typeof prompt !== 'string') {
     return { valid: false, error: 'prompt is required and must be a string' };
@@ -105,11 +113,20 @@ function validateRequest(body: unknown): { valid: true; data: DebateRequest } | 
     }
   }
 
+  // Validate mode if provided
+  if (mode !== undefined) {
+    const validModes: ArenaMode[] = ['debate', 'code', 'creative'];
+    if (typeof mode !== 'string' || !validModes.includes(mode as ArenaMode)) {
+      return { valid: false, error: 'mode must be one of: debate, code, creative' };
+    }
+  }
+
   return {
     valid: true,
     data: {
       prompt: prompt.trim(),
       models: models as string[] | undefined,
+      mode: (mode as ArenaMode) || 'debate',
       previousRounds: previousRounds as DebateRequest['previousRounds'],
       roundNumber: roundNumber as number | undefined
     }
@@ -242,7 +259,34 @@ export async function POST(request: NextRequest) {
         .eq('id', user.id)
         .single();
 
-      if (profileError) {
+      if (profileError && profileError.code === 'PGRST116') {
+        // Profile doesn't exist - create one
+        console.log('Creating new profile for user:', user.id);
+        const serviceClient = createServiceRoleClient();
+        const nextMonth = new Date();
+        nextMonth.setMonth(nextMonth.getMonth() + 1);
+        nextMonth.setDate(1);
+        nextMonth.setHours(0, 0, 0, 0);
+
+        const { data: newProfile, error: createError } = await serviceClient
+          .from('promptpit_profiles')
+          .insert({
+            id: user.id,
+            email: user.email,
+            tier: 'free',
+            debates_this_month: 0,
+            month_reset_date: nextMonth.toISOString(),
+          })
+          .select()
+          .single();
+
+        if (createError) {
+          console.error('Error creating user profile:', createError);
+          // Continue without profile - treat as guest
+        } else if (newProfile) {
+          userProfile = newProfile as PromptPitProfile;
+        }
+      } else if (profileError) {
         console.error('Error fetching user profile:', profileError);
         // Continue without profile - treat as guest
       } else if (profile) {
@@ -313,15 +357,15 @@ export async function POST(request: NextRequest) {
     });
   }
 
-  const { prompt, models: requestedModels, previousRounds } = validation.data;
+  const { prompt, models: requestedModels, mode, previousRounds } = validation.data;
 
   // Determine which models to use
   const modelKeys: ModelKey[] = requestedModels
     ? (requestedModels as ModelKey[])
     : (Object.keys(MODELS) as ModelKey[]);
 
-  // Generate dynamic system prompt with previous round context
-  const systemPrompt = getSystemPrompt(previousRounds);
+  // Generate dynamic system prompt with mode and previous round context
+  const systemPrompt = getSystemPrompt(mode, previousRounds);
 
   // Prepare messages for each model
   const messages: Message[] = [

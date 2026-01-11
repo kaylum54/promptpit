@@ -220,7 +220,7 @@ export default function GalleryPage() {
                     {/* Highlight */}
                     {debate.verdict?.highlight && (
                       <p className="text-sm text-text-secondary line-clamp-2 mb-4 italic">
-                        "{debate.verdict.highlight}"
+                        &ldquo;{debate.verdict.highlight}&rdquo;
                       </p>
                     )}
 

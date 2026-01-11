@@ -3,6 +3,7 @@
 import { useState, useCallback, useRef } from 'react';
 import type { DebateResponse, DebateStreamEvent } from '@/lib/types';
 import { getModelKeys, type ModelKey } from '@/lib/models';
+import type { ArenaMode } from '@/lib/modes';
 
 export interface PreviousRound {
   prompt: string;
@@ -12,6 +13,7 @@ export interface PreviousRound {
 export interface StartDebateOptions {
   previousRounds?: PreviousRound[];
   models?: ModelKey[];
+  mode?: ArenaMode;
 }
 
 export interface UseDebateStreamReturn {
@@ -77,10 +79,10 @@ export function useDebateStream(): UseDebateStreamReturn {
   /**
    * Start a new debate with the given prompt
    * @param prompt - The debate prompt
-   * @param options - Optional settings including previousRounds and models
+   * @param options - Optional settings including previousRounds, models, and mode
    */
   const startDebate = useCallback((prompt: string, options?: StartDebateOptions) => {
-    const { previousRounds, models } = options || {};
+    const { previousRounds, models, mode } = options || {};
 
     // Determine the round number
     const roundNumber = previousRounds && previousRounds.length > 0
@@ -117,6 +119,7 @@ export function useDebateStream(): UseDebateStreamReturn {
           body: JSON.stringify({
             prompt,
             models,
+            mode,
             previousRounds,
             roundNumber,
           }),

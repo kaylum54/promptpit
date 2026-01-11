@@ -7,7 +7,7 @@ import ModelPanel from '@/components/ModelPanel';
 import JudgePanel from '@/components/JudgePanel';
 import DebateReactions from '@/components/DebateReactions';
 import { MODELS, getModelKeys, type ModelKey } from '@/lib/models';
-import type { DebateResponse, ModelScores, JudgeVerdict } from '@/lib/types';
+import type { DebateResponse, ModelScores, JudgeVerdict, DebateRound } from '@/lib/types';
 
 interface SharedDebate {
   id: string;
@@ -18,16 +18,23 @@ interface SharedDebate {
   latencies: Record<string, { ttft: number; total: number }> | null;
   created_at: string;
   shareId: string;
+  // Multi-round fields
+  is_multi_round?: boolean;
+  rounds?: DebateRound[];
+  total_rounds?: number;
 }
 
-function convertDebateToResponses(debate: SharedDebate): Record<string, DebateResponse> {
+function convertResponsesToDebateResponses(
+  responses: Record<string, string>,
+  latencies?: Record<string, { ttft: number; total: number }> | null
+): Record<string, DebateResponse> {
   const modelKeys = getModelKeys();
   const result: Record<string, DebateResponse> = {};
 
   for (const key of modelKeys) {
     const modelName = MODELS[key].name;
-    const content = debate.responses[modelName] || '';
-    const latency = debate.latencies?.[modelName] || { ttft: 0, total: 0 };
+    const content = responses[modelName] || '';
+    const latency = latencies?.[modelName] || { ttft: 0, total: 0 };
 
     if (content) {
       result[key] = {
@@ -40,6 +47,10 @@ function convertDebateToResponses(debate: SharedDebate): Record<string, DebateRe
   }
 
   return result;
+}
+
+function convertDebateToResponses(debate: SharedDebate): Record<string, DebateResponse> {
+  return convertResponsesToDebateResponses(debate.responses, debate.latencies);
 }
 
 export default function SharePage() {
@@ -64,7 +75,7 @@ export default function SharePage() {
         }
         const data = await response.json();
         setDebate(data);
-      } catch (err) {
+      } catch {
         setError('Failed to load debate');
       } finally {
         setIsLoading(false);
@@ -128,7 +139,14 @@ export default function SharePage() {
               <div className="bg-accent-primary/10 border border-accent-primary/20 rounded-lg px-4 py-3 mb-6 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className="text-lg">🔗</span>
-                  <span className="text-sm text-accent-primary">Shared Debate</span>
+                  <span className="text-sm text-accent-primary">
+                    Shared Debate
+                    {debate.is_multi_round && debate.total_rounds && (
+                      <span className="ml-2 text-xs text-text-muted">
+                        ({debate.total_rounds} round{debate.total_rounds > 1 ? 's' : ''})
+                      </span>
+                    )}
+                  </span>
                 </div>
                 <span className="text-xs text-text-muted">
                   {new Date(debate.created_at).toLocaleDateString('en-US', {
@@ -139,38 +157,90 @@ export default function SharePage() {
                 </span>
               </div>
 
-              {/* Prompt */}
-              <div className="bg-bg-elevated border border-border-subtle rounded-xl p-6 mb-8">
-                <h2 className="text-sm font-semibold text-text-muted uppercase tracking-wider mb-2">
-                  Debate Topic
-                </h2>
-                <p className="text-lg text-text-primary">{debate.prompt}</p>
+              {/* Initial Round (Round 1) */}
+              <div className="mb-8">
+                {/* Round 1 Prompt */}
+                <div className="bg-bg-elevated border border-border-subtle rounded-xl p-6 mb-6">
+                  <h2 className="text-sm font-semibold text-text-muted uppercase tracking-wider mb-2">
+                    {debate.is_multi_round ? 'Round 1 - Initial Topic' : 'Debate Topic'}
+                  </h2>
+                  <p className="text-lg text-text-primary">{debate.prompt}</p>
+                </div>
+
+                {/* Round 1 Model Panels */}
+                <section className="mb-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {activeModelKeys.map((key) => (
+                      <ModelPanel
+                        key={key}
+                        modelKey={key}
+                        response={displayResponses[key]}
+                      />
+                    ))}
+                  </div>
+                </section>
+
+                {/* Round 1 Judge Panel (only show if NOT multi-round, or if no additional rounds) */}
+                {(!debate.is_multi_round || !debate.rounds || debate.rounds.length === 0) && (debate.scores || debate.verdict) && (
+                  <section className="mb-6">
+                    <JudgePanel
+                      scores={debate.scores || {}}
+                      verdict={debate.verdict}
+                      currentTool={null}
+                      isJudging={false}
+                      isComplete={true}
+                    />
+                  </section>
+                )}
               </div>
 
-              {/* Model Panels */}
-              <section className="mb-10">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {activeModelKeys.map((key) => (
-                    <ModelPanel
-                      key={key}
-                      modelKey={key}
-                      response={displayResponses[key]}
-                    />
-                  ))}
-                </div>
-              </section>
+              {/* Additional Rounds (for multi-round debates) */}
+              {debate.is_multi_round && debate.rounds && debate.rounds.length > 0 && (
+                <>
+                  {debate.rounds.map((round, index) => {
+                    const roundResponses = convertResponsesToDebateResponses(round.responses, round.latencies);
+                    const roundModelKeys = Object.keys(roundResponses) as ModelKey[];
+                    const isLastRound = index === debate.rounds!.length - 1;
 
-              {/* Judge Panel */}
-              {(debate.scores || debate.verdict) && (
-                <section className="mb-10">
-                  <JudgePanel
-                    scores={debate.scores || {}}
-                    verdict={debate.verdict}
-                    currentTool={null}
-                    isJudging={false}
-                    isComplete={true}
-                  />
-                </section>
+                    return (
+                      <div key={round.roundNumber} className="mb-8 border-t border-border-subtle pt-8">
+                        {/* Round Header */}
+                        <div className="bg-bg-elevated border border-border-subtle rounded-xl p-6 mb-6">
+                          <h2 className="text-sm font-semibold text-text-muted uppercase tracking-wider mb-2">
+                            Round {round.roundNumber} - Follow-up
+                          </h2>
+                          <p className="text-lg text-text-primary">{round.prompt}</p>
+                        </div>
+
+                        {/* Round Model Panels */}
+                        <section className="mb-6">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {roundModelKeys.map((key) => (
+                              <ModelPanel
+                                key={`${round.roundNumber}-${key}`}
+                                modelKey={key}
+                                response={roundResponses[key]}
+                              />
+                            ))}
+                          </div>
+                        </section>
+
+                        {/* Round Judge Panel (show for last round, or if round has verdict) */}
+                        {(isLastRound || round.verdict) && (round.scores || round.verdict) && (
+                          <section className="mb-6">
+                            <JudgePanel
+                              scores={round.scores || {}}
+                              verdict={round.verdict || null}
+                              currentTool={null}
+                              isJudging={false}
+                              isComplete={true}
+                            />
+                          </section>
+                        )}
+                      </div>
+                    );
+                  })}
+                </>
               )}
 
               {/* Reactions */}

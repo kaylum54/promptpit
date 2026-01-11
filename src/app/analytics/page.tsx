@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import type { ModelKey } from '@/lib/models';
 
@@ -47,21 +46,15 @@ const REACTION_EMOJIS = {
 
 export default function AnalyticsPage() {
   const { user, isLoading: isAuthLoading } = useAuth();
-  const router = useRouter();
   const [data, setData] = useState<AnalyticsData | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!isAuthLoading && !user) {
-      router.push('/');
-      return;
-    }
-
     if (user) {
       fetchAnalytics();
     }
-  }, [user, isAuthLoading, router]);
+  }, [user]);
 
   const fetchAnalytics = async () => {
     setIsLoading(true);
@@ -70,10 +63,6 @@ export default function AnalyticsPage() {
     try {
       const response = await fetch('/api/analytics');
       if (!response.ok) {
-        if (response.status === 401) {
-          router.push('/');
-          return;
-        }
         throw new Error('Failed to fetch analytics');
       }
       const result = await response.json();
@@ -94,9 +83,35 @@ export default function AnalyticsPage() {
     );
   }
 
-  // Redirect if not authenticated
+  // Show sign-in prompt if not authenticated
   if (!user) {
-    return null;
+    return (
+      <div className="min-h-screen flex flex-col bg-bg-base">
+        <header className="h-16 border-b border-border-subtle bg-bg-base/80 backdrop-blur-sm sticky top-0 z-30">
+          <div className="max-w-[1400px] mx-auto h-full px-6 flex items-center justify-between">
+            <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+              <span className="text-xl">&#x1F3DF;</span>
+              <h1 className="text-xl font-bold text-text-primary">PromptPit</h1>
+            </Link>
+          </div>
+        </header>
+        <main className="flex-1 flex items-center justify-center px-6">
+          <div className="text-center max-w-md">
+            <span className="text-6xl mb-6 block">&#x1F4CA;</span>
+            <h1 className="text-2xl font-bold text-text-primary mb-3">Sign In to View Analytics</h1>
+            <p className="text-text-secondary mb-6">
+              Track your debate history, see win rates, and discover which AI models perform best for you.
+            </p>
+            <Link
+              href="/"
+              className="inline-flex items-center gap-2 bg-accent-primary text-white px-6 py-3 rounded-lg hover:bg-accent-hover transition-colors"
+            >
+              Go to Home & Sign In
+            </Link>
+          </div>
+        </main>
+      </div>
+    );
   }
 
   return (
@@ -252,33 +267,51 @@ export default function AnalyticsPage() {
               {/* Activity Chart */}
               <div className="mt-8 bg-bg-elevated border border-border-subtle rounded-xl p-6">
                 <h2 className="text-lg font-semibold text-text-primary mb-4">Activity (Last 30 Days)</h2>
-                <div className="h-32 flex items-end gap-1">
-                  {data.debatesOverTime.map((point, index) => {
-                    const maxCount = Math.max(...data.debatesOverTime.map(p => p.count), 1);
-                    const height = (point.count / maxCount) * 100;
+                {(() => {
+                  const maxCount = Math.max(...data.debatesOverTime.map(p => p.count), 1);
+                  const totalActivity = data.debatesOverTime.reduce((sum, p) => sum + p.count, 0);
 
-                    return (
-                      <div
-                        key={point.date}
-                        className="flex-1 group relative"
-                        title={`${point.date}: ${point.count} debate${point.count !== 1 ? 's' : ''}`}
-                      >
-                        <div
-                          className="bg-accent-primary/60 hover:bg-accent-primary rounded-t transition-colors"
-                          style={{ height: `${Math.max(height, 4)}%` }}
-                        />
-                        {/* Tooltip */}
-                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-bg-surface border border-border rounded text-xs text-text-primary opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
-                          {new Date(point.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}: {point.count}
-                        </div>
+                  return (
+                    <>
+                      <div className="h-40 flex items-end gap-1">
+                        {data.debatesOverTime.map((point) => {
+                          const heightPercent = (point.count / maxCount) * 100;
+                          const hasActivity = point.count > 0;
+
+                          return (
+                            <div
+                              key={point.date}
+                              className="flex-1 group relative flex flex-col justify-end"
+                              style={{ minHeight: '100%' }}
+                            >
+                              {/* Bar */}
+                              <div
+                                className={`w-full rounded-sm transition-all ${
+                                  hasActivity
+                                    ? 'bg-blue-500 hover:bg-blue-400'
+                                    : 'bg-zinc-800 hover:bg-zinc-700'
+                                }`}
+                                style={{
+                                  height: hasActivity ? `${Math.max(heightPercent, 15)}%` : '3px',
+                                  minHeight: hasActivity ? '20px' : '3px'
+                                }}
+                              />
+                              {/* Tooltip */}
+                              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-zinc-900 border border-zinc-700 rounded text-xs text-white opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10 shadow-lg">
+                                {new Date(point.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}: {point.count} debate{point.count !== 1 ? 's' : ''}
+                              </div>
+                            </div>
+                          );
+                        })}
                       </div>
-                    );
-                  })}
-                </div>
-                <div className="flex justify-between mt-2 text-xs text-text-muted">
-                  <span>30 days ago</span>
-                  <span>Today</span>
-                </div>
+                      <div className="flex justify-between mt-3 text-xs text-text-muted">
+                        <span>30 days ago</span>
+                        <span className="text-text-secondary font-medium">{totalActivity} debates total</span>
+                        <span>Today</span>
+                      </div>
+                    </>
+                  );
+                })()}
               </div>
 
               {/* Empty State */}

@@ -72,7 +72,7 @@ export function useUsage(): UseUsageReturn {
 
     // Listen for auth state changes to refetch usage when user changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, _session) => {
+      () => {
         // Refetch usage data when auth state changes
         fetchUsage();
       }

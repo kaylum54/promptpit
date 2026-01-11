@@ -5,7 +5,8 @@
  */
 
 import { NextRequest } from 'next/server';
-import { JUDGE_SYSTEM_PROMPT, judgeTools, buildJudgePrompt } from '@/lib/judge-tools';
+import { getJudgeSystemPrompt, getJudgeTools, buildJudgePrompt } from '@/lib/judge-tools';
+import { type ArenaMode } from '@/lib/modes';
 import type { ModelScores, JudgeVerdict, JudgeStreamEvent } from '@/lib/types';
 
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
@@ -14,6 +15,7 @@ const JUDGE_MODEL = 'anthropic/claude-sonnet-4';
 interface JudgeRequest {
   prompt: string;
   responses: Record<string, string>;
+  mode?: ArenaMode;
 }
 
 interface OpenRouterMessage {
@@ -50,7 +52,7 @@ function validateRequest(body: unknown): { valid: true; data: JudgeRequest } | {
     return { valid: false, error: 'Request body must be an object' };
   }
 
-  const { prompt, responses } = body as Record<string, unknown>;
+  const { prompt, responses, mode } = body as Record<string, unknown>;
 
   if (!prompt || typeof prompt !== 'string') {
     return { valid: false, error: 'prompt is required and must be a string' };
@@ -75,11 +77,20 @@ function validateRequest(body: unknown): { valid: true; data: JudgeRequest } | {
     }
   }
 
+  // Validate mode if provided
+  if (mode !== undefined) {
+    const validModes: ArenaMode[] = ['debate', 'code', 'creative'];
+    if (typeof mode !== 'string' || !validModes.includes(mode as ArenaMode)) {
+      return { valid: false, error: 'mode must be one of: debate, code, creative' };
+    }
+  }
+
   return {
     valid: true,
     data: {
       prompt: prompt.trim(),
       responses: responses as Record<string, string>,
+      mode: (mode as ArenaMode) || 'debate',
     },
   };
 }
@@ -114,17 +125,20 @@ function sendEvent(writer: WritableStreamDefaultWriter<Uint8Array>, event: Judge
 /**
  * Calls OpenRouter API with tool support (non-streaming for tool loop)
  */
-async function callOpenRouter(messages: OpenRouterMessage[]): Promise<OpenRouterResponse> {
+async function callOpenRouter(messages: OpenRouterMessage[], mode: ArenaMode = 'debate'): Promise<OpenRouterResponse> {
+  const systemPrompt = getJudgeSystemPrompt(mode);
+  const tools = getJudgeTools(mode);
+
   const response = await fetch(OPENROUTER_URL, {
     method: 'POST',
     headers: getHeaders(),
     body: JSON.stringify({
       model: JUDGE_MODEL,
       messages: [
-        { role: 'system', content: JUDGE_SYSTEM_PROMPT },
+        { role: 'system', content: systemPrompt },
         ...messages,
       ],
-      tools: judgeTools,
+      tools,
       tool_choice: 'auto',
     }),
   });
@@ -143,11 +157,12 @@ async function callOpenRouter(messages: OpenRouterMessage[]): Promise<OpenRouter
 async function runJudgeLoop(
   prompt: string,
   responses: Record<string, string>,
-  writer: WritableStreamDefaultWriter<Uint8Array>
+  writer: WritableStreamDefaultWriter<Uint8Array>,
+  mode: ArenaMode = 'debate'
 ): Promise<void> {
   // Initialize conversation with the judge prompt
   const messages: OpenRouterMessage[] = [
-    { role: 'user', content: buildJudgePrompt(prompt, responses) },
+    { role: 'user', content: buildJudgePrompt(prompt, responses, mode) },
   ];
 
   // State to accumulate scores and verdict
@@ -157,7 +172,7 @@ async function runJudgeLoop(
   // Tool-use loop
   while (true) {
     try {
-      const data = await callOpenRouter(messages);
+      const data = await callOpenRouter(messages, mode);
       const choice = data.choices[0];
 
       if (choice.message.tool_calls && choice.message.tool_calls.length > 0) {
@@ -320,14 +335,14 @@ export async function POST(request: NextRequest) {
     });
   }
 
-  const { prompt, responses } = validation.data;
+  const { prompt, responses, mode } = validation.data;
 
   // Create the SSE stream
   const { readable, writable } = new TransformStream<Uint8Array, Uint8Array>();
   const writer = writable.getWriter();
 
   // Run the judge loop in the background
-  runJudgeLoop(prompt, responses, writer)
+  runJudgeLoop(prompt, responses, writer, mode)
     .catch((error) => {
       console.error('Judge loop failed:', error);
     })

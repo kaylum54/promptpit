@@ -21,6 +21,7 @@ interface UsageResponse {
  *
  * Returns the user's current usage and limits.
  * For guests (not logged in), returns free tier limits with 0 usage.
+ * For admins (role='admin'), returns unlimited usage with pro tier benefits.
  */
 export async function GET() {
   try {
@@ -88,6 +89,29 @@ export async function GET() {
     const userProfile = profile as PromptPitProfile;
     let debatesThisMonth = userProfile.debates_this_month;
     let monthResetDate = userProfile.month_reset_date;
+
+    // Check if user is admin - admins get unlimited access
+    const isAdmin = userProfile.role === 'admin';
+
+    if (isAdmin) {
+      // Admins get unlimited usage with pro tier benefits
+      const nextMonth = new Date();
+      nextMonth.setMonth(nextMonth.getMonth() + 1);
+      nextMonth.setDate(1);
+      nextMonth.setHours(0, 0, 0, 0);
+
+      const adminResponse: UsageResponse = {
+        tier: 'pro',
+        debatesThisMonth: 0,
+        debatesLimit: Infinity,
+        debatesRemaining: Infinity,
+        canStartDebate: true,
+        monthResetDate: nextMonth.toISOString(),
+        isGuest: false,
+      };
+
+      return NextResponse.json(adminResponse);
+    }
 
     // Check if month_reset_date has passed and reset if needed
     const now = new Date();

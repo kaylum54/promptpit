@@ -13,10 +13,10 @@ export async function GET(
   try {
     const serviceClient = createServiceRoleClient();
 
-    // Fetch the debate by share_id
+    // Fetch the debate by share_id (including multi-round fields)
     const { data: debate, error } = await serviceClient
       .from('debates')
-      .select('id, prompt, responses, scores, verdict, latencies, created_at, share_id, is_public')
+      .select('id, prompt, responses, scores, verdict, latencies, created_at, share_id, is_public, is_multi_round, rounds, total_rounds')
       .eq('share_id', shareId)
       .eq('is_public', true)
       .single();
@@ -38,6 +38,10 @@ export async function GET(
       latencies: debate.latencies,
       created_at: debate.created_at,
       shareId: debate.share_id,
+      // Multi-round fields
+      is_multi_round: debate.is_multi_round,
+      rounds: debate.rounds,
+      total_rounds: debate.total_rounds,
     });
   } catch (error) {
     console.error('Error in GET /api/share/[shareId]:', error);

@@ -83,6 +83,12 @@ export function useAuth(): UseAuthReturn {
   useEffect(() => {
     const supabase = createClient();
 
+    // Timeout to prevent infinite loading (8 second max)
+    const timeout = setTimeout(() => {
+      console.warn('Auth loading timed out, setting to not loading');
+      setIsLoading(false);
+    }, 8000);
+
     // Get initial session
     const getInitialSession = async () => {
       try {
@@ -90,15 +96,22 @@ export function useAuth(): UseAuthReturn {
         const currentUser = session?.user ?? null;
         setUser(currentUser);
 
-        // Fetch profile if user is logged in
+        // Set loading to false immediately after getting user
+        // Profile fetch happens in background
+        setIsLoading(false);
+        clearTimeout(timeout);
+
+        // Fetch profile if user is logged in (non-blocking)
         if (currentUser) {
-          await fetchProfile(currentUser.id);
+          fetchProfile(currentUser.id).catch(err => {
+            console.error('Background profile fetch failed:', err);
+          });
         }
       } catch (error) {
         console.error('Error getting initial session:', error);
         setUser(null);
         setProfile(null);
-      } finally {
+        clearTimeout(timeout);
         setIsLoading(false);
       }
     };
@@ -107,25 +120,27 @@ export function useAuth(): UseAuthReturn {
 
     // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
+      (_event, session) => {
         const currentUser = session?.user ?? null;
         setUser(currentUser);
+        setIsLoading(false);
 
         if (currentUser) {
-          // Fetch profile when user signs in
-          await fetchProfile(currentUser.id);
+          // Fetch profile in background (non-blocking)
+          fetchProfile(currentUser.id).catch(err => {
+            console.error('Profile fetch failed:', err);
+          });
         } else {
           // Clear profile when user signs out
           setProfile(null);
         }
-
-        setIsLoading(false);
       }
     );
 
-    // Cleanup subscription on unmount
+    // Cleanup subscription and timeout on unmount
     return () => {
       subscription.unsubscribe();
+      clearTimeout(timeout);
     };
   }, [fetchProfile]);
 
@@ -135,16 +150,27 @@ export function useAuth(): UseAuthReturn {
   const signIn = useCallback(async (email: string, password: string): Promise<{ error?: string }> => {
     const supabase = createClient();
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    try {
+      // Add timeout to prevent infinite hanging
+      const timeoutPromise = new Promise<{ error: string }>((_, reject) =>
+        setTimeout(() => reject(new Error('Sign in timed out. Please try again.')), 15000)
+      );
 
-    if (error) {
-      return { error: error.message };
+      const signInPromise = supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      const { error } = await Promise.race([signInPromise, timeoutPromise]);
+
+      if (error) {
+        return { error: error.message };
+      }
+
+      return {};
+    } catch (err) {
+      return { error: err instanceof Error ? err.message : 'Sign in failed. Please try again.' };
     }
-
-    return {};
   }, []);
 
   /**
@@ -169,9 +195,28 @@ export function useAuth(): UseAuthReturn {
    * Sign out the current user
    */
   const signOut = useCallback(async (): Promise<void> => {
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    setProfile(null);
+    try {
+      const supabase = createClient();
+
+      // Clear local state immediately for responsive UI
+      setUser(null);
+      setProfile(null);
+
+      // Then sign out from Supabase (with timeout)
+      const timeoutPromise = new Promise<void>((_, reject) =>
+        setTimeout(() => reject(new Error('Sign out timed out')), 5000)
+      );
+
+      await Promise.race([
+        supabase.auth.signOut(),
+        timeoutPromise
+      ]);
+    } catch (err) {
+      console.error('Sign out error:', err);
+      // Still clear local state even if Supabase call fails
+      setUser(null);
+      setProfile(null);
+    }
   }, []);
 
   return {

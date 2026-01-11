@@ -10,6 +10,11 @@ export interface ModelConfig {
   description?: string;
   contextWindow?: number;
   supportsTools?: boolean;
+  // Pricing per 1M tokens (in USD)
+  pricing?: {
+    input: number;
+    output: number;
+  };
 }
 
 export const MODELS: Record<string, ModelConfig> = {
@@ -20,6 +25,7 @@ export const MODELS: Record<string, ModelConfig> = {
     description: 'Anthropic Claude Sonnet 4 - Balanced performance and capability',
     contextWindow: 200000,
     supportsTools: true,
+    pricing: { input: 3, output: 15 },
   },
   gpt4o: {
     id: 'openai/gpt-4o',
@@ -28,6 +34,7 @@ export const MODELS: Record<string, ModelConfig> = {
     description: 'OpenAI GPT-4o - Multimodal flagship model',
     contextWindow: 128000,
     supportsTools: true,
+    pricing: { input: 2.5, output: 10 },
   },
   gemini: {
     id: 'google/gemini-2.0-flash-001',
@@ -36,6 +43,7 @@ export const MODELS: Record<string, ModelConfig> = {
     description: 'Google Gemini 2.0 Flash - Fast and capable',
     contextWindow: 1000000,
     supportsTools: true,
+    pricing: { input: 0.1, output: 0.4 },
   },
   llama: {
     id: 'meta-llama/llama-3.3-70b-instruct',
@@ -44,6 +52,7 @@ export const MODELS: Record<string, ModelConfig> = {
     description: 'Meta Llama 3.3 70B - Open source powerhouse',
     contextWindow: 131072,
     supportsTools: true,
+    pricing: { input: 0.4, output: 0.4 },
   },
 } as const;
 

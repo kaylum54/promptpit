@@ -60,9 +60,9 @@ export async function GET(request: NextRequest) {
     }
 
     // Get reaction counts for these debates
-    const debateIds = (debates || []).map(d => d.id);
+    const debateIds = (debates || []).map((d: { id: string }) => d.id);
 
-    let reactionCounts: Record<string, number> = {};
+    const reactionCounts: Record<string, number> = {};
     if (debateIds.length > 0) {
       const { data: reactions } = await serviceClient
         .from('debate_reactions')
@@ -77,7 +77,14 @@ export async function GET(request: NextRequest) {
     }
 
     // Format response
-    const galleryDebates: GalleryDebate[] = (debates || []).map(debate => ({
+    interface DebateRow {
+      id: string;
+      prompt: string;
+      verdict: unknown;
+      share_id: string | null;
+      created_at: string;
+    }
+    const galleryDebates: GalleryDebate[] = (debates || []).map((debate: DebateRow) => ({
       id: debate.id,
       prompt: debate.prompt,
       verdict: debate.verdict as GalleryDebate['verdict'],

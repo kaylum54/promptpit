@@ -69,11 +69,17 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
       />
 
       {/* Modal */}
-      <div className="relative z-10 w-full max-w-[400px] mx-4 bg-bg-surface border border-border rounded-xl shadow-lg">
+      <div
+        className="relative z-10 w-full max-w-[400px] mx-4 border border-border rounded-xl shadow-lg shadow-glow-md animate-scale-in overflow-hidden"
+        style={{ background: 'linear-gradient(180deg, var(--bg-surface) 0%, var(--bg-base) 100%)' }}
+      >
+        {/* Top glow line */}
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-accent-primary/50 to-transparent" />
+
         {/* Close button */}
         <button
           onClick={handleClose}
-          className="absolute top-4 right-4 text-text-tertiary hover:text-text-secondary transition-colors"
+          className="absolute top-4 right-4 p-1 rounded-md text-text-tertiary hover:text-text-primary hover:bg-bg-elevated transition-all duration-200"
           aria-label="Close"
         >
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -83,12 +89,14 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
 
         <div className="p-8">
           {/* Header */}
-          <h2 className="text-section-header text-text-primary text-center mb-2">
-            {mode === 'signin' ? 'Sign In' : 'Create Account'}
-          </h2>
-          <p className="text-body-small text-text-secondary text-center mb-6">
-            Get 15 free debates per month
-          </p>
+          <div className="pb-4 mb-4 border-b border-border-subtle">
+            <h2 className="text-section-header text-text-primary text-center mb-2">
+              {mode === 'signin' ? 'Sign In' : 'Create Account'}
+            </h2>
+            <p className="text-body-small text-text-secondary text-center">
+              Get 15 free debates per month
+            </p>
+          </div>
 
           {/* Tab toggle */}
           <div className="flex bg-bg-elevated rounded-lg p-1 mb-6">
@@ -147,7 +155,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
 
             {/* Error */}
             {error && (
-              <div className="text-error text-sm bg-error/10 border border-error/20 rounded-lg p-3">
+              <div className="text-error text-sm bg-error/10 border border-error/20 rounded-lg p-3 shadow-[0_0_15px_rgba(239,68,68,0.15)]">
                 {error}
               </div>
             )}
@@ -156,7 +164,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
             <button
               type="submit"
               disabled={isSubmitting || !email || !password}
-              className="w-full bg-accent-primary hover:bg-accent-hover text-white font-semibold py-3 px-6 rounded-md disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2"
+              className="w-full bg-accent-primary hover:bg-accent-hover hover:translate-y-[-1px] text-white font-semibold py-3 px-6 rounded-md disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2 shadow-lg hover:shadow-glow-accent"
             >
               {isSubmitting ? (
                 <>

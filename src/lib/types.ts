@@ -100,6 +100,7 @@ export interface PromptPitProfile {
   id: string;  // This is the user's auth.users.id
   email?: string;
   tier: 'free' | 'pro';
+  role?: 'user' | 'admin';  // Optional, defaults to 'user' for backwards compatibility
   stripe_customer_id?: string;
   stripe_subscription_id?: string;
   debates_this_month: number;

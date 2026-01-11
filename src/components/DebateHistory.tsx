@@ -42,10 +42,7 @@ function formatRelativeTime(dateString: string): string {
   }
 }
 
-function truncateText(text: string, maxLength: number): string {
-  if (text.length <= maxLength) return text;
-  return text.slice(0, maxLength).trim() + '...';
-}
+// truncateText function removed - not currently used
 
 function getModelDisplayInfo(winnerKey: string): { name: string; color: string } {
   const colorMap: Record<string, string> = {

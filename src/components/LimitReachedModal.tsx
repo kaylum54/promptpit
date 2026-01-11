@@ -30,11 +30,17 @@ export default function LimitReachedModal({
       />
 
       {/* Modal */}
-      <div className="relative z-10 w-full max-w-[400px] mx-4 bg-bg-surface border border-border rounded-xl shadow-lg">
+      <div
+        className="relative z-10 w-full max-w-[400px] mx-4 border border-border rounded-xl shadow-lg shadow-glow-md animate-scale-in overflow-hidden"
+        style={{ background: 'linear-gradient(180deg, var(--bg-surface) 0%, var(--bg-base) 100%)' }}
+      >
+        {/* Top glow line */}
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-warning/50 to-transparent" />
+
         {/* Close button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-text-tertiary hover:text-text-secondary transition-colors"
+          className="absolute top-4 right-4 p-1 rounded-md text-text-tertiary hover:text-text-primary hover:bg-bg-elevated transition-all duration-200"
           aria-label="Close"
         >
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -63,9 +69,11 @@ export default function LimitReachedModal({
           </div>
 
           {/* Header */}
-          <h2 className="text-section-header text-text-primary text-center mb-2">
-            You&apos;ve reached your monthly limit
-          </h2>
+          <div className="border-b border-border-subtle pb-4 mb-4">
+            <h2 className="text-section-header text-text-primary text-center">
+              You&apos;ve reached your monthly limit
+            </h2>
+          </div>
 
           {/* Usage display */}
           <div className="bg-bg-elevated rounded-lg p-4 mb-4">
@@ -98,7 +106,7 @@ export default function LimitReachedModal({
               <Link
                 href="/pricing"
                 onClick={onClose}
-                className="block w-full bg-accent-primary hover:bg-accent-hover text-white font-semibold py-3 px-6 rounded-md text-center transition-all duration-200"
+                className="block w-full bg-accent-primary hover:bg-accent-hover hover:translate-y-[-1px] text-white font-semibold py-3 px-6 rounded-md text-center transition-all duration-200 shadow-lg hover:shadow-glow-accent"
               >
                 Upgrade to Pro
               </Link>
@@ -118,7 +126,7 @@ export default function LimitReachedModal({
               <button
                 type="button"
                 onClick={onClose}
-                className="w-full bg-accent-primary hover:bg-accent-hover text-white font-semibold py-3 px-6 rounded-md transition-all duration-200"
+                className="w-full bg-accent-primary hover:bg-accent-hover hover:translate-y-[-1px] text-white font-semibold py-3 px-6 rounded-md transition-all duration-200 shadow-lg hover:shadow-glow-accent"
               >
                 Got It
               </button>

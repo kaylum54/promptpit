@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+import Image from 'next/image';
 import { useDebateStream, type PreviousRound } from '@/hooks/useDebateStream';
 import { useJudgeStream } from '@/hooks/useJudgeStream';
 import { useAuth } from '@/hooks/useAuth';
@@ -17,7 +18,9 @@ import SettingsModal from '@/components/SettingsModal';
 import DebateReactions from '@/components/DebateReactions';
 import Leaderboard from '@/components/Leaderboard';
 import ShareButton from '@/components/ShareButton';
-import { getModelKeys, MODELS, type ModelKey } from '@/lib/models';
+import { getModelKeys, MODELS } from '@/lib/models';
+import { ARENA_MODES, type ArenaMode } from '@/lib/modes';
+import ModeSelector from '@/components/ModeSelector';
 import type { Debate, DebateResponse, ModelScores, JudgeVerdict } from '@/lib/types';
 
 // Convert historical debate data to display format
@@ -46,7 +49,7 @@ export default function Home() {
   const { scores, verdict, currentTool, isJudging, isComplete, startJudging, reset: resetJudge } = useJudgeStream();
   const { user, isLoading: isAuthLoading, signOut } = useAuth();
   const { usage, refresh: refreshUsage } = useUsage();
-  const { selectedModels, setSelectedModels, isLoaded: prefsLoaded } = usePreferences();
+  const { selectedModels, setSelectedModels, customModels, setCustomModels, isLoaded: prefsLoaded } = usePreferences();
 
   const [currentPrompt, setCurrentPrompt] = useState('');
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -54,6 +57,10 @@ export default function Home() {
   const [showLimitModal, setShowLimitModal] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showLeaderboard, setShowLeaderboard] = useState(false);
+  // Blind mode - hide model names until verdict is revealed
+  const [blindMode, setBlindMode] = useState(false);
+  // Arena mode state
+  const [arenaMode, setArenaMode] = useState<ArenaMode>('debate');
   // Multi-round debate state
   const [completedRounds, setCompletedRounds] = useState<PreviousRound[]>([]);
   const [showContinueInput, setShowContinueInput] = useState(false);
@@ -90,9 +97,9 @@ export default function Home() {
           judgeResponses[MODELS[key].name] = responses[key].content;
         }
       }
-      startJudging(currentPrompt, judgeResponses);
+      startJudging(currentPrompt, judgeResponses, arenaMode);
     }
-  }, [isViewingHistory, hasContent, allModelsComplete, hasCompletedModels, isJudging, isComplete, currentPrompt, activeModelKeys, responses, startJudging]);
+  }, [isViewingHistory, hasContent, allModelsComplete, hasCompletedModels, isJudging, isComplete, currentPrompt, activeModelKeys, responses, startJudging, arenaMode]);
 
   // Auto-save debate when judge completes
   useEffect(() => {
@@ -169,8 +176,8 @@ export default function Home() {
     setCurrentPrompt(prompt);
     hasTriggeredJudge.current = false;
     hasSavedDebate.current = false;
-    // Pass selected models to the debate
-    startDebate(prompt, { previousRounds, models: selectedModels });
+    // Pass selected models and arena mode to the debate
+    startDebate(prompt, { previousRounds, models: selectedModels, mode: arenaMode });
   };
 
   const handleContinueDebate = () => {
@@ -221,12 +228,24 @@ export default function Home() {
   return (
     <div className="min-h-screen flex flex-col bg-bg-base">
       {/* Header */}
-      <header className="h-16 border-b border-border-subtle bg-bg-base/80 backdrop-blur-sm sticky top-0 z-30">
+      <header className="h-16 border-b border-border bg-bg-base/80 backdrop-blur-md sticky top-0 z-30 relative">
+        {/* Subtle glow line at bottom */}
+        <div
+          className="absolute bottom-0 left-0 right-0 h-px"
+          style={{
+            background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1) 20%, rgba(255, 255, 255, 0.15) 50%, rgba(255, 255, 255, 0.1) 80%, transparent)',
+          }}
+        />
         <div className="max-w-[1400px] mx-auto h-full px-6 flex items-center justify-between">
           {/* Logo */}
           <div className="flex items-center gap-3">
-            <span className="text-xl">&#x1F3DF;</span>
-            <h1 className="text-xl font-bold text-text-primary">PromptPit</h1>
+            <Image src="/logo.jpeg" alt="PromptPit Logo" width={32} height={32} className="rounded-md" />
+            <h1
+              className="text-xl font-bold text-text-primary tracking-wide"
+              style={{ textShadow: '0 0 20px rgba(255, 255, 255, 0.1)' }}
+            >
+              PromptPit
+            </h1>
           </div>
 
           {/* Nav */}
@@ -234,19 +253,23 @@ export default function Home() {
             {/* Gallery Link */}
             <a
               href="/gallery"
-              className="p-2 rounded-md hover:bg-bg-elevated transition-colors"
+              className="p-2 rounded-md hover:bg-bg-elevated transition-colors group"
               title="Browse Public Debates"
             >
-              <span className="text-lg">&#x1F30D;</span>
+              <svg className="w-5 h-5 text-text-secondary group-hover:text-text-primary transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
+              </svg>
             </a>
 
             {/* Leaderboard Button */}
             <button
               onClick={() => setShowLeaderboard(true)}
-              className="p-2 rounded-md hover:bg-bg-elevated transition-colors"
+              className="p-2 rounded-md hover:bg-bg-elevated transition-colors group"
               title="Leaderboard"
             >
-              <span className="text-lg">&#x1F3C6;</span>
+              <svg className="w-5 h-5 text-text-secondary group-hover:text-text-primary transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+              </svg>
             </button>
 
             {/* Settings Button */}
@@ -365,11 +388,41 @@ export default function Home() {
             </div>
           )}
 
+          {/* Mode Selector & Blind Mode Toggle */}
+          {!isViewingHistory && (
+            <div className="mt-6 flex flex-col sm:flex-row items-start sm:items-center gap-4">
+              {/* Arena Mode Selector */}
+              <ModeSelector
+                currentMode={arenaMode}
+                onModeChange={setArenaMode}
+                disabled={isDebating || isJudging}
+              />
+
+              {/* Blind Mode Toggle */}
+              <button
+                onClick={() => setBlindMode(!blindMode)}
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${blindMode ? 'bg-accent-primary text-white' : 'bg-bg-elevated text-text-secondary hover:text-text-primary border border-border'}`}
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  {blindMode ? (
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                  ) : (
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  )}
+                </svg>
+                {blindMode ? 'Blind Mode ON' : 'Blind Mode'}
+              </button>
+            </div>
+          )}
+
           {/* Input Section */}
           <DebateInput
             onSubmit={handleStartDebate}
             isLoading={isDebating || isJudging}
             onReset={handleReset}
+            placeholder={ARENA_MODES[arenaMode].placeholder}
+            examples={ARENA_MODES[arenaMode].examples}
+            mode={arenaMode}
           />
 
           {/* Model Panels Grid */}
@@ -382,6 +435,8 @@ export default function Home() {
                       key={key}
                       modelKey={key}
                       response={displayResponses[key]}
+                      blindMode={blindMode}
+                      showIdentity={isComplete || isViewingHistory}
                     />
                   )
                 ))}
@@ -441,7 +496,7 @@ export default function Home() {
                     onChange={(e) => setContinuePrompt(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleContinueDebate()}
                     placeholder="Enter follow-up prompt..."
-                    className="flex-1 bg-bg-base border border-border-subtle rounded-lg px-4 py-3 text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-accent-primary/50 focus:border-accent-primary"
+                    className="flex-1 bg-[#1a1a1a] border border-border-subtle rounded-lg px-4 py-3 text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-accent-primary/50 focus:border-accent-primary"
                   />
                   <button
                     onClick={handleContinueDebate}
@@ -499,6 +554,8 @@ export default function Home() {
         onClose={() => setShowSettings(false)}
         selectedModels={selectedModels}
         onModelsChange={setSelectedModels}
+        customModels={customModels}
+        onCustomModelsChange={setCustomModels}
       />
       <Leaderboard
         isOpen={showLeaderboard}

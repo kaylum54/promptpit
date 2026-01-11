@@ -139,7 +139,8 @@ export async function GET() {
     }
 
     for (const debate of debates || []) {
-      const dateStr = debate.created_at.split('T')[0];
+      // Handle both ISO format (with 'T') and Supabase format (with space)
+      const dateStr = debate.created_at.split('T')[0].split(' ')[0];
       if (dateCounts[dateStr] !== undefined) {
         dateCounts[dateStr]++;
       }
@@ -150,8 +151,8 @@ export async function GET() {
     }
 
     // Get reactions on user's debates
-    const debateIds = (debates || []).map(d => d.id);
-    let reactionBreakdown = { like: 0, fire: 0, think: 0, laugh: 0 };
+    const debateIds = (debates || []).map((d: { id: string }) => d.id);
+    const reactionBreakdown: { like: number; fire: number; think: number; laugh: number } = { like: 0, fire: 0, think: 0, laugh: 0 };
     let totalReactionsReceived = 0;
 
     if (debateIds.length > 0) {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+// useState and useEffect removed - not currently used
 import { MODELS, type ModelKey, getModelKeys } from '@/lib/models';
 
 interface ModelSelectorProps {

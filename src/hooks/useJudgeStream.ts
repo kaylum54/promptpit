@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useRef } from 'react';
 import type { ModelScores, JudgeVerdict, JudgeStreamEvent } from '@/lib/types';
+import type { ArenaMode } from '@/lib/modes';
 
 export interface UseJudgeStreamReturn {
   scores: Record<string, ModelScores>;  // { "Claude": { reasoning: {...}, clarity: {...}, ... }, ... }
@@ -9,7 +10,7 @@ export interface UseJudgeStreamReturn {
   currentTool: string | null;  // Currently executing tool name for UI
   isJudging: boolean;
   isComplete: boolean;
-  startJudging: (prompt: string, responses: Record<string, string>) => void;
+  startJudging: (prompt: string, responses: Record<string, string>, mode?: ArenaMode) => void;
   reset: () => void;
 }
 
@@ -47,7 +48,7 @@ export function useJudgeStream(): UseJudgeStreamReturn {
   /**
    * Start judging with the given prompt and model responses
    */
-  const startJudging = useCallback((prompt: string, responses: Record<string, string>) => {
+  const startJudging = useCallback((prompt: string, responses: Record<string, string>, mode: ArenaMode = 'debate') => {
     // Reset state before starting
     reset();
 
@@ -65,7 +66,7 @@ export function useJudgeStream(): UseJudgeStreamReturn {
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ prompt, responses }),
+          body: JSON.stringify({ prompt, responses, mode }),
           signal,
         });
 
