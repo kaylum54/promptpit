@@ -1,0 +1,298 @@
+'use client';
+
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { useDebateStream } from '@/hooks/useDebateStream';
+import { useJudgeStream } from '@/hooks/useJudgeStream';
+import { useAuth } from '@/hooks/useAuth';
+import { useUsage } from '@/hooks/useUsage';
+import DebateInput from '@/components/DebateInput';
+import ModelPanel from '@/components/ModelPanel';
+import JudgePanel from '@/components/JudgePanel';
+import AuthModal from '@/components/AuthModal';
+import DebateHistory from '@/components/DebateHistory';
+import UsageBadge from '@/components/UsageBadge';
+import LimitReachedModal from '@/components/LimitReachedModal';
+import { getModelKeys, MODELS } from '@/lib/models';
+import type { Debate, DebateResponse, ModelScores, JudgeVerdict } from '@/lib/types';
+
+// Convert historical debate data to display format
+function convertDebateToResponses(debate: Debate): Record<string, DebateResponse> {
+  const modelKeys = getModelKeys();
+  const result: Record<string, DebateResponse> = {};
+
+  for (const key of modelKeys) {
+    const modelName = MODELS[key].name;
+    const content = debate.responses[modelName] || '';
+    const latency = debate.latencies?.[modelName] || { ttft: 0, total: 0 };
+
+    result[key] = {
+      model: key,
+      content,
+      latency,
+      status: content ? 'complete' : 'idle',
+    };
+  }
+
+  return result;
+}
+
+export default function Home() {
+  const { responses, isDebating, startDebate, reset: resetDebate } = useDebateStream();
+  const { scores, verdict, currentTool, isJudging, isComplete, startJudging, reset: resetJudge } = useJudgeStream();
+  const { user, isLoading: isAuthLoading, signOut } = useAuth();
+  const { usage, refresh: refreshUsage } = useUsage();
+  const modelKeys = getModelKeys();
+
+  const [currentPrompt, setCurrentPrompt] = useState('');
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
+  const [showLimitModal, setShowLimitModal] = useState(false);
+  // State for viewing historical debates
+  const [loadedDebate, setLoadedDebate] = useState<Debate | null>(null);
+  const [historicalResponses, setHistoricalResponses] = useState<Record<string, DebateResponse> | null>(null);
+  const [historicalScores, setHistoricalScores] = useState<Record<string, ModelScores> | null>(null);
+  const [historicalVerdict, setHistoricalVerdict] = useState<JudgeVerdict | null>(null);
+
+  // Determine what content to display (historical or live)
+  const displayResponses = historicalResponses || responses;
+  const displayScores = historicalScores || scores;
+  const displayVerdict = historicalVerdict || verdict;
+  const isViewingHistory = loadedDebate !== null;
+
+
+  const hasTriggeredJudge = useRef(false);
+  const hasSavedDebate = useRef(false);
+
+  const hasContent = Object.values(displayResponses).some(r => r.content.length > 0);
+  const allModelsComplete = Object.values(responses).every(r => r.status === 'complete' || r.status === 'error');
+  const hasCompletedModels = Object.values(responses).some(r => r.status === 'complete');
+
+  // Auto-trigger judge when debate completes
+  useEffect(() => {
+    if (!isViewingHistory && hasContent && allModelsComplete && hasCompletedModels && !isJudging && !isComplete && !hasTriggeredJudge.current) {
+      hasTriggeredJudge.current = true;
+      const judgeResponses: Record<string, string> = {};
+      for (const key of modelKeys) {
+        if (responses[key].status === 'complete') {
+          judgeResponses[MODELS[key].name] = responses[key].content;
+        }
+      }
+      startJudging(currentPrompt, judgeResponses);
+    }
+  }, [isViewingHistory, hasContent, allModelsComplete, hasCompletedModels, isJudging, isComplete, currentPrompt, modelKeys, responses, startJudging]);
+
+  // Auto-save debate when judge completes
+  useEffect(() => {
+    if (!isViewingHistory && isComplete && verdict && !hasSavedDebate.current) {
+      hasSavedDebate.current = true;
+      const latencies: Record<string, { ttft: number; total: number }> = {};
+      for (const key of modelKeys) {
+        latencies[MODELS[key].name] = responses[key].latency;
+      }
+      const responseData: Record<string, string> = {};
+      for (const key of modelKeys) {
+        responseData[MODELS[key].name] = responses[key].content;
+      }
+      fetch('/api/debates', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt: currentPrompt,
+          responses: responseData,
+          scores,
+          verdict,
+          latencies,
+        }),
+      })
+        .then(() => {
+          // Refresh usage after debate is saved
+          refreshUsage();
+        })
+        .catch(err => console.error('Failed to save debate:', err));
+    }
+  }, [isViewingHistory, isComplete, verdict, currentPrompt, modelKeys, responses, scores, refreshUsage]);
+
+  const handleSelectDebate = useCallback((debate: Debate) => {
+    resetDebate();
+    resetJudge();
+    hasTriggeredJudge.current = false;
+    hasSavedDebate.current = true;
+
+    setLoadedDebate(debate);
+    setCurrentPrompt(debate.prompt);
+    setHistoricalResponses(convertDebateToResponses(debate));
+    setHistoricalScores(debate.scores || null);
+    setHistoricalVerdict(debate.verdict || null);
+  }, [resetDebate, resetJudge]);
+
+  const handleStartDebate = (prompt: string) => {
+    // Check if user has reached their debate limit
+    if (usage?.canStartDebate === false) {
+      setShowLimitModal(true);
+      return;
+    }
+
+    setLoadedDebate(null);
+    setHistoricalResponses(null);
+    setHistoricalScores(null);
+    setHistoricalVerdict(null);
+
+    setCurrentPrompt(prompt);
+    hasTriggeredJudge.current = false;
+    hasSavedDebate.current = false;
+    startDebate(prompt);
+  };
+
+  const handleReset = () => {
+    setLoadedDebate(null);
+    setHistoricalResponses(null);
+    setHistoricalScores(null);
+    setHistoricalVerdict(null);
+
+    setCurrentPrompt('');
+    hasTriggeredJudge.current = false;
+    hasSavedDebate.current = false;
+    resetDebate();
+    resetJudge();
+  };
+
+  return (
+    <div className="min-h-screen flex flex-col bg-bg-base">
+      {/* Header */}
+      <header className="h-16 border-b border-border-subtle bg-bg-base/80 backdrop-blur-sm sticky top-0 z-30">
+        <div className="max-w-[1400px] mx-auto h-full px-6 flex items-center justify-between">
+          {/* Logo */}
+          <div className="flex items-center gap-3">
+            <span className="text-xl">&#x1F3DF;</span>
+            <h1 className="text-xl font-bold text-text-primary">PromptPit</h1>
+          </div>
+
+          {/* Nav */}
+          <nav className="flex items-center gap-4">
+            {user && (
+              <button
+                onClick={() => setShowHistory(true)}
+                className="text-sm font-medium text-text-secondary hover:text-text-primary px-4 py-2 rounded-md hover:bg-bg-elevated transition-colors"
+              >
+                History
+              </button>
+            )}
+            {user && usage && !usage.isGuest && (
+              <UsageBadge
+                debatesRemaining={usage.debatesRemaining}
+                debatesLimit={usage.debatesLimit}
+                tier={usage.tier}
+                onClick={() => window.location.href = '/pricing'}
+              />
+            )}
+            {isAuthLoading ? (
+              <span className="text-text-muted text-sm">...</span>
+            ) : user ? (
+              <div className="flex items-center gap-3">
+                <span className="text-text-tertiary text-sm truncate max-w-[150px] hidden sm:inline" title={user.email || ''}>
+                  {user.email}
+                </span>
+                <button
+                  onClick={() => signOut()}
+                  className="text-sm font-medium text-text-secondary hover:text-text-primary px-4 py-2 rounded-md hover:bg-bg-elevated transition-colors"
+                >
+                  Sign Out
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setShowAuthModal(true)}
+                className="text-sm font-medium text-text-secondary hover:text-text-primary px-4 py-2 rounded-md hover:bg-bg-elevated transition-colors"
+              >
+                Sign In
+              </button>
+            )}
+          </nav>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="flex-1 px-6">
+        <div className="max-w-content mx-auto">
+          {/* Viewing History Banner */}
+          {isViewingHistory && (
+            <div className="bg-accent-primary/10 border border-accent-primary/20 rounded-lg px-4 py-3 mt-6 flex items-center justify-between">
+              <span className="text-sm text-accent-primary">
+                Viewing saved debate from history
+              </span>
+              <button
+                onClick={handleReset}
+                className="text-sm font-medium text-accent-primary hover:text-accent-hover"
+              >
+                Start New Debate
+              </button>
+            </div>
+          )}
+
+          {/* Input Section */}
+          <DebateInput
+            onSubmit={handleStartDebate}
+            isLoading={isDebating || isJudging}
+            onReset={handleReset}
+          />
+
+          {/* Model Panels Grid */}
+          {(isDebating || hasContent) && (
+            <section className="mb-10">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {modelKeys.map((key) => (
+                  <ModelPanel
+                    key={key}
+                    modelKey={key}
+                    response={displayResponses[key]}
+                  />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* Judge Panel */}
+          {(hasContent && !isDebating) && (isJudging || isComplete || isViewingHistory || Object.keys(displayScores).length > 0) && (
+            <section className="mb-10">
+              <JudgePanel
+                scores={displayScores}
+                verdict={displayVerdict}
+                currentTool={isViewingHistory ? null : currentTool}
+                isJudging={isViewingHistory ? false : isJudging}
+                isComplete={isViewingHistory ? true : isComplete}
+              />
+            </section>
+          )}
+        </div>
+      </main>
+
+      {/* Footer */}
+      <footer className="border-t border-border-subtle px-6 py-4">
+        <div className="max-w-content mx-auto text-center text-text-muted text-sm">
+          Powered by OpenRouter
+        </div>
+      </footer>
+
+      {/* Modals */}
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+      />
+      <DebateHistory
+        isOpen={showHistory}
+        onClose={() => setShowHistory(false)}
+        onSelectDebate={handleSelectDebate}
+      />
+      {usage && (
+        <LimitReachedModal
+          isOpen={showLimitModal}
+          onClose={() => setShowLimitModal(false)}
+          debatesUsed={usage.debatesThisMonth}
+          debatesLimit={usage.debatesLimit}
+          tier={usage.tier}
+          monthResetDate={usage.monthResetDate}
+        />
+      )}
+    </div>
+  );
+}
