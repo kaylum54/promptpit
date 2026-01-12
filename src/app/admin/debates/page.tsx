@@ -143,7 +143,7 @@ export default function AdminDebatesPage() {
                 <td className="px-4 py-3 text-text-secondary text-sm">{formatDate(d.created_at)}</td>
                 <td className="px-4 py-3 text-right">
                   {actionLoading === d.id ? '...' : (
-                    <button onClick={() => deleteDebate(d.id, d.prompt)}
+                    <button onClick={() => deleteDebate(d.id)}
                       className="px-2 py-1 text-xs bg-red-500/20 text-red-400 rounded hover:bg-red-500/30">Delete</button>
                   )}
                 </td>
