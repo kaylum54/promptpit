@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { useDebateStream, type PreviousRound } from '@/hooks/useDebateStream';
 import { useJudgeStream } from '@/hooks/useJudgeStream';
 import { useAuth } from '@/hooks/useAuth';
