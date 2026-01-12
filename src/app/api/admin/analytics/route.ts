@@ -162,7 +162,7 @@ export async function GET(request: NextRequest) {
       .select('event_name')
       .limit(1000);
 
-    const uniqueEventTypes = [...new Set((uniqueEvents || []).map(e => e.event_name))].sort();
+    const uniqueEventTypes = Array.from(new Set((uniqueEvents || []).map(e => e.event_name))).sort();
 
     return NextResponse.json({
       eventCounts,

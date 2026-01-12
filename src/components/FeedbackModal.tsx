@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 
 interface FeedbackModalProps {
@@ -76,14 +76,14 @@ export default function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
     }
   };
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     setCategory('general');
     setMessage('');
     setEmail(user?.email || '');
     setError('');
     setIsSuccess(false);
     onClose();
-  };
+  }, [user?.email, onClose]);
 
   if (!isOpen) return null;
 
