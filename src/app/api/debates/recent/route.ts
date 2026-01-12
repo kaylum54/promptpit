@@ -88,7 +88,15 @@ export async function GET(request: NextRequest) {
     }
 
     // Transform the data to extract winner from verdict JSONB
-    const recentDebates: RecentDebate[] = (debates || []).map((debate) => {
+    interface DebateRow {
+      id: string;
+      prompt: string;
+      arena: string | null;
+      verdict: unknown;
+      created_at: string;
+      share_id: string | null;
+    }
+    const recentDebates: RecentDebate[] = (debates || []).map((debate: DebateRow) => {
       // Extract winner from verdict JSONB field
       let winner: string | null = null;
       if (debate.verdict && typeof debate.verdict === 'object') {
