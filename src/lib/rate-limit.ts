@@ -76,11 +76,11 @@ function startCleanup(intervalMs: number = 60 * 1000): void {
 
   cleanupInterval = setInterval(() => {
     const now = Date.now();
-    for (const [key, entry] of rateLimitStore.entries()) {
+    rateLimitStore.forEach((entry, key) => {
       if (entry.resetTime <= now) {
         rateLimitStore.delete(key);
       }
-    }
+    });
   }, intervalMs);
 
   // Allow the process to exit even if the interval is running
