@@ -10,10 +10,13 @@ export interface PreviousRound {
   responses: Record<string, string>;
 }
 
+export type ArenaType = 'debate' | 'code' | 'writing';
+
 export interface StartDebateOptions {
   previousRounds?: PreviousRound[];
   models?: ModelKey[];
   mode?: ArenaMode;
+  arena?: ArenaType;
 }
 
 export interface UseDebateStreamReturn {
@@ -82,7 +85,7 @@ export function useDebateStream(): UseDebateStreamReturn {
    * @param options - Optional settings including previousRounds, models, and mode
    */
   const startDebate = useCallback((prompt: string, options?: StartDebateOptions) => {
-    const { previousRounds, models, mode } = options || {};
+    const { previousRounds, models, mode, arena } = options || {};
 
     // Determine the round number
     const roundNumber = previousRounds && previousRounds.length > 0
@@ -120,6 +123,7 @@ export function useDebateStream(): UseDebateStreamReturn {
             prompt,
             models,
             mode,
+            arena,
             previousRounds,
             roundNumber,
           }),

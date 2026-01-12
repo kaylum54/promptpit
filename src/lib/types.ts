@@ -42,13 +42,34 @@ export interface JudgeVerdict {
   highlight: string;
 }
 
+// Extended response structure for arena-specific judging
+export interface ModelAnalysis {
+  model: string;
+  scores: Record<string, number>;
+  analysis: string;
+  strongestMoment: string;
+  weakness: string;
+}
+
+export interface StructuredJudgeResult {
+  openingRemarks: string;
+  modelAnalyses: ModelAnalysis[];
+  headToHead: string;
+  winner: string;
+  verdict: string;
+  quotableLine: string;
+}
+
 // SSE event types for /api/judge
 export type JudgeStreamEvent =
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   | { type: 'tool_call'; tool: string; input: any }
   | { type: 'scoring'; model: string; category: string; score: number; rationale: string }
   | { type: 'verdict'; winner: string; verdict: string; highlight: string }
-  | { type: 'complete'; scores: Record<string, ModelScores>; verdict: JudgeVerdict };
+  | { type: 'complete'; scores: Record<string, ModelScores>; verdict: JudgeVerdict; structuredResult?: StructuredJudgeResult };
+
+// Arena types for debates
+export type DebateArena = 'debate' | 'code' | 'writing';
 
 // Database types (matches Supabase schema)
 export interface Debate {
@@ -67,6 +88,8 @@ export interface Debate {
   // Share fields
   share_id?: string | null;
   is_public?: boolean;
+  // Arena type
+  arena?: DebateArena;
 }
 
 // Multi-round debate types

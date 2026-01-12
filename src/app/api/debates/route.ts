@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerSupabaseClient, createServiceRoleClient, type Database } from '@/lib/supabase';
-import type { ModelScores, JudgeVerdict, Debate } from '@/lib/types';
+import type { ModelScores, JudgeVerdict, Debate, DebateArena } from '@/lib/types';
 
 // Round data for multi-round debates
 interface RoundData {
@@ -24,6 +24,8 @@ interface SaveDebateRequest {
   is_multi_round?: boolean;
   rounds?: RoundData[];
   total_rounds?: number;
+  // Arena type
+  arena?: DebateArena;
 }
 
 // Response type for POST
@@ -81,6 +83,8 @@ export async function POST(request: NextRequest) {
       ...(body.is_multi_round !== undefined && { is_multi_round: body.is_multi_round }),
       ...(body.rounds !== undefined && { rounds: body.rounds as unknown as Database['public']['Tables']['debates']['Insert']['rounds'] }),
       ...(body.total_rounds !== undefined && { total_rounds: body.total_rounds }),
+      // Include arena type if provided (defaults to 'debate' for backward compatibility)
+      arena: body.arena || 'debate',
     };
 
     // Use service role client for inserts to bypass RLS

@@ -19,6 +19,10 @@ import DebateReactions from '@/components/DebateReactions';
 import Leaderboard from '@/components/Leaderboard';
 import ShareButton from '@/components/ShareButton';
 import Footer from '@/components/Footer';
+import ArenaSelector from '@/components/ArenaSelector';
+import SuggestedPrompts from '@/components/SuggestedPrompts';
+import StatsBar from '@/components/StatsBar';
+import RecentBattles from '@/components/RecentBattles';
 import { getModelKeys, MODELS } from '@/lib/models';
 import { ARENA_MODES, type ArenaMode } from '@/lib/modes';
 import ModeSelector from '@/components/ModeSelector';
@@ -58,10 +62,13 @@ export default function Home() {
   const [showLimitModal, setShowLimitModal] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showLeaderboard, setShowLeaderboard] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   // Blind mode - hide model names until verdict is revealed
   const [blindMode, setBlindMode] = useState(false);
-  // Arena mode state
+  // Arena mode state (legacy ModeSelector)
   const [arenaMode, setArenaMode] = useState<ArenaMode>('debate');
+  // New arena selector state
+  const [selectedArena, setSelectedArena] = useState<'debate' | 'code' | 'writing'>('debate');
   // Multi-round debate state
   const [completedRounds, setCompletedRounds] = useState<PreviousRound[]>([]);
   const [showContinueInput, setShowContinueInput] = useState(false);
@@ -98,9 +105,9 @@ export default function Home() {
           judgeResponses[MODELS[key].name] = responses[key].content;
         }
       }
-      startJudging(currentPrompt, judgeResponses, arenaMode);
+      startJudging(currentPrompt, judgeResponses, arenaMode, selectedArena);
     }
-  }, [isViewingHistory, hasContent, allModelsComplete, hasCompletedModels, isJudging, isComplete, currentPrompt, activeModelKeys, responses, startJudging, arenaMode]);
+  }, [isViewingHistory, hasContent, allModelsComplete, hasCompletedModels, isJudging, isComplete, currentPrompt, activeModelKeys, responses, startJudging, arenaMode, selectedArena]);
 
   // Auto-save debate when judge completes
   useEffect(() => {
@@ -178,7 +185,7 @@ export default function Home() {
     hasTriggeredJudge.current = false;
     hasSavedDebate.current = false;
     // Pass selected models and arena mode to the debate
-    startDebate(prompt, { previousRounds, models: selectedModels, mode: arenaMode });
+    startDebate(prompt, { previousRounds, models: selectedModels, mode: arenaMode, arena: selectedArena });
   };
 
   const handleContinueDebate = () => {
@@ -224,6 +231,23 @@ export default function Home() {
     hasSavedDebate.current = false;
     resetDebate();
     resetJudge();
+  };
+
+  // Handle upgrade required for Pro arena access
+  const handleUpgradeRequired = () => {
+    if (!user) {
+      setShowAuthModal(true);
+    } else {
+      // Redirect to pricing page for logged-in users
+      window.location.href = '/pricing';
+    }
+  };
+
+  // Handle selecting a suggested prompt - start debate directly
+  const handleSelectSuggestedPrompt = (prompt: string) => {
+    if (!isDebating && !isJudging) {
+      handleStartDebate(prompt);
+    }
   };
 
   return (
@@ -409,6 +433,21 @@ export default function Home() {
             </div>
           )}
 
+          {/* Arena Selector */}
+          {!isViewingHistory && (
+            <div className="mt-6">
+              <ArenaSelector
+                selectedArena={selectedArena}
+                onSelect={setSelectedArena}
+                userTier={usage?.tier || 'guest'}
+                onUpgradeRequired={handleUpgradeRequired}
+              />
+            </div>
+          )}
+
+          {/* Stats Bar */}
+          <StatsBar className="mt-6" />
+
           {/* Selected Models Indicator */}
           {prefsLoaded && selectedModels.length < getModelKeys().length && (
             <div className="mt-4 flex items-center gap-2 text-xs text-text-muted">
@@ -469,6 +508,14 @@ export default function Home() {
             examples={ARENA_MODES[arenaMode].examples}
             mode={arenaMode}
           />
+
+          {/* Suggested Prompts */}
+          {!isViewingHistory && !isDebating && !hasContent && (
+            <SuggestedPrompts
+              arena={selectedArena}
+              onSelectPrompt={handleSelectSuggestedPrompt}
+            />
+          )}
 
           {/* Model Panels Grid */}
           {(isDebating || hasContent) && (
@@ -562,6 +609,11 @@ export default function Home() {
               </div>
             </section>
           )}
+
+          {/* Recent Battles */}
+          <section className="mb-10">
+            <RecentBattles />
+          </section>
         </div>
       </main>
 

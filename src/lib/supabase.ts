@@ -26,6 +26,7 @@ export type Database = {
           is_multi_round: boolean | null
           rounds: Json | null
           total_rounds: number | null
+          arena: string | null  // 'debate' | 'code' | 'writing'
         }
         Insert: {
           id?: string
@@ -39,6 +40,7 @@ export type Database = {
           is_multi_round?: boolean | null
           rounds?: Json | null
           total_rounds?: number | null
+          arena?: string | null  // 'debate' | 'code' | 'writing'
         }
         Update: {
           id?: string
@@ -52,6 +54,7 @@ export type Database = {
           is_multi_round?: boolean | null
           rounds?: Json | null
           total_rounds?: number | null
+          arena?: string | null  // 'debate' | 'code' | 'writing'
         }
       }
       users: {

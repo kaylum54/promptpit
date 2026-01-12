@@ -2,12 +2,19 @@
  * Judge API Route for PromptPit
  * Implements the Judge Agent with tool-use loop to evaluate AI model responses
  * Returns SSE stream with scoring events and final verdict
+ *
+ * Supports arena-specific judging with different judge personas:
+ * - 'debate' -> The Arbiter (default)
+ * - 'code' -> The Architect
+ * - 'writing' -> The Editor
  */
 
 import { NextRequest } from 'next/server';
-import { getJudgeSystemPrompt, getJudgeTools, buildJudgePrompt } from '@/lib/judge-tools';
+import { getJudgeSystemPrompt, buildJudgePrompt } from '@/lib/judge-tools';
 import { type ArenaMode } from '@/lib/modes';
-import type { ModelScores, JudgeVerdict, JudgeStreamEvent } from '@/lib/types';
+import { getJudgeConfig, type ArenaType } from '@/lib/judges';
+import { getToolsForArena, type Tool } from '@/lib/judges/tools';
+import type { ModelScores, JudgeVerdict, JudgeStreamEvent, ModelAnalysis, StructuredJudgeResult } from '@/lib/types';
 
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
 const JUDGE_MODEL = 'anthropic/claude-sonnet-4';
@@ -16,6 +23,41 @@ interface JudgeRequest {
   prompt: string;
   responses: Record<string, string>;
   mode?: ArenaMode;
+  arena?: ArenaType;  // New arena parameter: 'debate' | 'code' | 'writing'
+}
+
+/**
+ * Maps ArenaMode ('creative') to ArenaType ('writing') for judge configs
+ * This handles the naming difference between modes and judges
+ */
+function mapModeToArenaType(mode?: ArenaMode, arena?: ArenaType): ArenaType {
+  // If arena is explicitly provided, use it
+  if (arena) return arena;
+
+  // Map mode to arena type
+  switch (mode) {
+    case 'creative':
+      return 'writing';
+    case 'code':
+      return 'code';
+    case 'debate':
+    default:
+      return 'debate';
+  }
+}
+
+/**
+ * Converts arena-specific tools to OpenRouter function format
+ */
+function convertToolsToOpenRouterFormat(tools: Tool[]) {
+  return tools.map(tool => ({
+    type: 'function' as const,
+    function: {
+      name: tool.name,
+      description: tool.description,
+      parameters: tool.input_schema,
+    },
+  }));
 }
 
 interface OpenRouterMessage {
@@ -52,7 +94,7 @@ function validateRequest(body: unknown): { valid: true; data: JudgeRequest } | {
     return { valid: false, error: 'Request body must be an object' };
   }
 
-  const { prompt, responses, mode } = body as Record<string, unknown>;
+  const { prompt, responses, mode, arena } = body as Record<string, unknown>;
 
   if (!prompt || typeof prompt !== 'string') {
     return { valid: false, error: 'prompt is required and must be a string' };
@@ -77,11 +119,19 @@ function validateRequest(body: unknown): { valid: true; data: JudgeRequest } | {
     }
   }
 
-  // Validate mode if provided
+  // Validate mode if provided (legacy parameter)
   if (mode !== undefined) {
     const validModes: ArenaMode[] = ['debate', 'code', 'creative'];
     if (typeof mode !== 'string' || !validModes.includes(mode as ArenaMode)) {
       return { valid: false, error: 'mode must be one of: debate, code, creative' };
+    }
+  }
+
+  // Validate arena if provided (new parameter)
+  if (arena !== undefined) {
+    const validArenas: ArenaType[] = ['debate', 'code', 'writing'];
+    if (typeof arena !== 'string' || !validArenas.includes(arena as ArenaType)) {
+      return { valid: false, error: 'arena must be one of: debate, code, writing' };
     }
   }
 
@@ -91,6 +141,7 @@ function validateRequest(body: unknown): { valid: true; data: JudgeRequest } | {
       prompt: prompt.trim(),
       responses: responses as Record<string, string>,
       mode: (mode as ArenaMode) || 'debate',
+      arena: arena as ArenaType | undefined,
     },
   };
 }
@@ -124,10 +175,35 @@ function sendEvent(writer: WritableStreamDefaultWriter<Uint8Array>, event: Judge
 
 /**
  * Calls OpenRouter API with tool support (non-streaming for tool loop)
+ * Now supports arena-specific judge personas and tools
  */
-async function callOpenRouter(messages: OpenRouterMessage[], mode: ArenaMode = 'debate'): Promise<OpenRouterResponse> {
-  const systemPrompt = getJudgeSystemPrompt(mode);
-  const tools = getJudgeTools(mode);
+async function callOpenRouter(
+  messages: OpenRouterMessage[],
+  mode: ArenaMode = 'debate',
+  arena?: ArenaType
+): Promise<OpenRouterResponse> {
+  // Determine the effective arena type
+  const effectiveArena = mapModeToArenaType(mode, arena);
+
+  // Get judge configuration for this arena
+  const judgeConfig = getJudgeConfig(effectiveArena);
+
+  // Use the new arena-specific tools if arena is provided, otherwise fall back to legacy tools
+  let tools;
+  let systemPrompt: string;
+
+  if (arena) {
+    // New behavior: use arena-specific judge config and tools
+    systemPrompt = judgeConfig.systemPrompt;
+    const arenaTools = getToolsForArena(effectiveArena);
+    tools = convertToolsToOpenRouterFormat(arenaTools);
+  } else {
+    // Legacy behavior: use the old judge-tools system
+    systemPrompt = getJudgeSystemPrompt(mode);
+    // Import dynamically to avoid circular deps - use the old getJudgeTools
+    const { getJudgeTools } = await import('@/lib/judge-tools');
+    tools = getJudgeTools(mode);
+  }
 
   const response = await fetch(OPENROUTER_URL, {
     method: 'POST',
@@ -153,26 +229,34 @@ async function callOpenRouter(messages: OpenRouterMessage[], mode: ArenaMode = '
 
 /**
  * Processes the judge tool-use loop and streams events
+ * Now supports arena-specific judging with structured response building
  */
 async function runJudgeLoop(
   prompt: string,
   responses: Record<string, string>,
   writer: WritableStreamDefaultWriter<Uint8Array>,
-  mode: ArenaMode = 'debate'
+  mode: ArenaMode = 'debate',
+  arena?: ArenaType
 ): Promise<void> {
   // Initialize conversation with the judge prompt
   const messages: OpenRouterMessage[] = [
     { role: 'user', content: buildJudgePrompt(prompt, responses, mode) },
   ];
 
-  // State to accumulate scores and verdict
+  // State to accumulate scores and verdict (legacy format)
   const scores: Record<string, ModelScores> = {};
   let verdict: JudgeVerdict | null = null;
+
+  // State for structured response (new arena format)
+  const structuredResult: Partial<StructuredJudgeResult> = {
+    modelAnalyses: [],
+  };
+  const modelScoresMap: Record<string, Record<string, number>> = {};
 
   // Tool-use loop
   while (true) {
     try {
-      const data = await callOpenRouter(messages, mode);
+      const data = await callOpenRouter(messages, mode, arena);
       const choice = data.choices[0];
 
       if (choice.message.tool_calls && choice.message.tool_calls.length > 0) {
@@ -193,20 +277,27 @@ async function runJudgeLoop(
             input: args,
           });
 
-          // Handle scoring tools
-          if (toolCall.function.name.startsWith('score_')) {
-            const category = toolCall.function.name.replace('score_', '') as keyof ModelScores;
+          const toolName = toolCall.function.name;
+
+          // Handle scoring tools (both legacy and new formats)
+          if (toolName.startsWith('score_')) {
+            const category = toolName.replace('score_', '');
             const model = args.model as string;
             const score = args.score as number;
             const rationale = args.rationale as string;
 
-            // Initialize model scores if needed
+            // Initialize model scores if needed (legacy format)
             if (!scores[model]) {
               scores[model] = {};
             }
+            // Record in legacy format
+            (scores[model] as Record<string, { score: number; rationale: string }>)[category] = { score, rationale };
 
-            // Record the score
-            scores[model][category] = { score, rationale };
+            // Also track in new format for structured result
+            if (!modelScoresMap[model]) {
+              modelScoresMap[model] = {};
+            }
+            modelScoresMap[model][category] = score;
 
             // Emit scoring event
             await sendEvent(writer, {
@@ -218,13 +309,48 @@ async function runJudgeLoop(
             });
           }
 
-          // Handle verdict tool
-          if (toolCall.function.name === 'generate_verdict') {
-            verdict = {
-              winner: args.winner as string,
-              verdict: args.verdict as string,
-              highlight: args.highlight as string,
+          // Handle opening remarks (new arena tools)
+          if (toolName === 'write_opening_remarks') {
+            structuredResult.openingRemarks = args.remarks as string;
+          }
+
+          // Handle model analysis (new arena tools)
+          if (toolName === 'write_model_analysis') {
+            const model = args.model as string;
+            const analysis: ModelAnalysis = {
+              model,
+              scores: modelScoresMap[model] || {},
+              analysis: args.analysis as string,
+              strongestMoment: (args.strongest_moment || args.strongestMoment) as string,
+              weakness: args.weakness as string,
             };
+            structuredResult.modelAnalyses = structuredResult.modelAnalyses || [];
+            structuredResult.modelAnalyses.push(analysis);
+          }
+
+          // Handle head-to-head comparison (new arena tools)
+          if (toolName === 'write_head_to_head') {
+            structuredResult.headToHead = args.comparison as string;
+          }
+
+          // Handle verdict tool (both legacy and new formats)
+          if (toolName === 'generate_verdict') {
+            const winner = args.winner as string;
+            const verdictText = args.verdict as string;
+            // New format uses quotable_line, legacy uses highlight
+            const highlight = (args.quotable_line || args.highlight || '') as string;
+
+            // Set legacy verdict format
+            verdict = {
+              winner,
+              verdict: verdictText,
+              highlight,
+            };
+
+            // Set structured result fields
+            structuredResult.winner = winner;
+            structuredResult.verdict = verdictText;
+            structuredResult.quotableLine = highlight;
 
             // Emit verdict event
             await sendEvent(writer, {
@@ -258,9 +384,12 @@ async function runJudgeLoop(
           const modelTotals: Record<string, number> = {};
           for (const [model, modelScores] of Object.entries(scores)) {
             let total = 0;
-            if (modelScores.reasoning) total += modelScores.reasoning.score;
-            if (modelScores.clarity) total += modelScores.clarity.score;
-            if (modelScores.persuasiveness) total += modelScores.persuasiveness.score;
+            // Sum all scores dynamically (works for any arena)
+            for (const scoreData of Object.values(modelScores)) {
+              if (scoreData && typeof scoreData === 'object' && 'score' in scoreData) {
+                total += (scoreData as { score: number }).score;
+              }
+            }
             modelTotals[model] = total;
           }
 
@@ -268,11 +397,18 @@ async function runJudgeLoop(
             a[1] > b[1] ? a : b
           )[0];
 
+          const arenaType = mapModeToArenaType(mode, arena);
+          const arenaLabel = arenaType === 'writing' ? 'writing challenge' : arenaType === 'code' ? 'coding challenge' : 'debate';
+
           verdict = {
             winner,
-            verdict: `Based on the scores, ${winner} wins this debate.`,
+            verdict: `Based on the scores, ${winner} wins this ${arenaLabel}.`,
             highlight: 'See individual scores for details.',
           };
+
+          structuredResult.winner = winner;
+          structuredResult.verdict = verdict.verdict;
+          structuredResult.quotableLine = verdict.highlight;
 
           await sendEvent(writer, {
             type: 'verdict',
@@ -282,7 +418,7 @@ async function runJudgeLoop(
           });
         }
 
-        // Emit complete event
+        // Emit complete event with both legacy and structured data
         await sendEvent(writer, {
           type: 'complete',
           scores,
@@ -291,6 +427,8 @@ async function runJudgeLoop(
             verdict: 'Unable to determine a winner.',
             highlight: '',
           },
+          // Include structured result if arena-specific judging was used
+          ...(arena ? { structuredResult: structuredResult as StructuredJudgeResult } : {}),
         });
 
         break;
@@ -335,14 +473,15 @@ export async function POST(request: NextRequest) {
     });
   }
 
-  const { prompt, responses, mode } = validation.data;
+  const { prompt, responses, mode, arena } = validation.data;
 
   // Create the SSE stream
   const { readable, writable } = new TransformStream<Uint8Array, Uint8Array>();
   const writer = writable.getWriter();
 
   // Run the judge loop in the background
-  runJudgeLoop(prompt, responses, writer, mode)
+  // Pass arena parameter for arena-specific judging
+  runJudgeLoop(prompt, responses, writer, mode, arena)
     .catch((error) => {
       console.error('Judge loop failed:', error);
     })

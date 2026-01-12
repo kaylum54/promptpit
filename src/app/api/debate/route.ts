@@ -45,10 +45,17 @@ function getSystemPrompt(
   return context;
 }
 
+// Arena type for the request - 'writing' maps to 'creative' internally
+type ArenaType = 'debate' | 'code' | 'writing';
+
+// Pro-only arenas that require Pro tier access
+const PRO_ARENAS: ArenaType[] = ['code', 'writing'];
+
 interface DebateRequest {
   prompt: string;
   models?: string[];
   mode?: ArenaMode;
+  arena?: ArenaType;  // New arena parameter: 'debate' | 'code' | 'writing'
   previousRounds?: Array<{
     prompt: string;
     responses: Record<string, string>;
@@ -64,7 +71,7 @@ function validateRequest(body: unknown): { valid: true; data: DebateRequest } | 
     return { valid: false, error: 'Request body must be an object' };
   }
 
-  const { prompt, models, mode, previousRounds, roundNumber } = body as Record<string, unknown>;
+  const { prompt, models, mode, arena, previousRounds, roundNumber } = body as Record<string, unknown>;
 
   if (!prompt || typeof prompt !== 'string') {
     return { valid: false, error: 'prompt is required and must be a string' };
@@ -122,12 +129,27 @@ function validateRequest(body: unknown): { valid: true; data: DebateRequest } | 
     }
   }
 
+  // Validate arena if provided
+  if (arena !== undefined) {
+    const validArenas: ArenaType[] = ['debate', 'code', 'writing'];
+    if (typeof arena !== 'string' || !validArenas.includes(arena as ArenaType)) {
+      return { valid: false, error: 'arena must be one of: debate, code, writing' };
+    }
+  }
+
+  // Determine the arena type - default to 'debate' if not provided
+  const arenaType: ArenaType = (arena as ArenaType) || 'debate';
+
+  // Map arena to mode for internal use ('writing' -> 'creative')
+  const resolvedMode: ArenaMode = arenaType === 'writing' ? 'creative' : arenaType;
+
   return {
     valid: true,
     data: {
       prompt: prompt.trim(),
       models: models as string[] | undefined,
-      mode: (mode as ArenaMode) || 'debate',
+      mode: (mode as ArenaMode) || resolvedMode,
+      arena: arenaType,
       previousRounds: previousRounds as DebateRequest['previousRounds'],
       roundNumber: roundNumber as number | undefined
     }
@@ -364,7 +386,33 @@ export async function POST(request: NextRequest) {
     });
   }
 
-  const { prompt, models: requestedModels, mode, previousRounds } = validation.data;
+  const { prompt, models: requestedModels, mode, arena, previousRounds } = validation.data;
+
+  // Check Pro access for code/writing arenas
+  if (arena && PRO_ARENAS.includes(arena)) {
+    // User must be logged in and have Pro tier to access code/writing arenas
+    if (!userProfile) {
+      return new Response(JSON.stringify({
+        error: 'Pro subscription required',
+        code: 'PRO_REQUIRED',
+        message: `The ${arena} arena requires a Pro subscription. Please sign in and upgrade to Pro to access this feature.`
+      }), {
+        status: 403,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    if (userProfile.tier !== 'pro') {
+      return new Response(JSON.stringify({
+        error: 'Pro subscription required',
+        code: 'PRO_REQUIRED',
+        message: `The ${arena} arena is a Pro feature. Please upgrade to Pro to access this arena.`
+      }), {
+        status: 403,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+  }
 
   // Determine which models to use
   const modelKeys: ModelKey[] = requestedModels
