@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { MODELS, type ModelKey } from '@/lib/models';
 import Footer from '@/components/Footer';
@@ -60,11 +60,7 @@ export default function GalleryPage() {
   const [hasMore, setHasMore] = useState(false);
   const [totalCount, setTotalCount] = useState(0);
 
-  useEffect(() => {
-    fetchDebates();
-  }, [sort, page]);
-
-  const fetchDebates = async () => {
+  const fetchDebates = useCallback(async () => {
     setIsLoading(true);
     setError(null);
 
@@ -87,7 +83,11 @@ export default function GalleryPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [page, sort]);
+
+  useEffect(() => {
+    fetchDebates();
+  }, [fetchDebates]);
 
   const handleSortChange = (newSort: 'recent' | 'popular') => {
     setSort(newSort);

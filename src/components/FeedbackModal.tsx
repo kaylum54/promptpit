@@ -35,7 +35,7 @@ export default function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
       }, 2000);
       return () => clearTimeout(timer);
     }
-  }, [isSuccess]);
+  }, [isSuccess, handleClose]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

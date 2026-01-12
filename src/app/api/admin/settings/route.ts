@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServiceRoleClient } from '@/lib/supabase';
 import { requireAdmin } from '@/lib/admin';
 
 // Default settings

@@ -3,7 +3,6 @@
 import { useEffect, useRef } from 'react';
 import { MODELS, type ModelKey } from '@/lib/models';
 import type { DebateResponse } from '@/lib/types';
-import ModelIcon from '@/components/ModelIcon';
 
 interface ModelPanelProps {
   modelKey: string;

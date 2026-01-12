@@ -45,7 +45,7 @@ export default function AdminDebatesPage() {
 
   useEffect(() => { fetchDebates(); }, [fetchDebates]);
 
-  async function deleteDebate(id: string, prompt: string) {
+  async function deleteDebate(id: string) {
     if (!confirm('Delete this debate?')) return;
     setActionLoading(id);
     try {
