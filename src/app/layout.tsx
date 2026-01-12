@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
+import { Analytics } from "@vercel/analytics/react";
 import "./globals.css";
 import FeedbackButton from "@/components/FeedbackButton";
 
@@ -96,6 +97,7 @@ export default function RootLayout({
       >
         {children}
         <FeedbackButton />
+        <Analytics />
       </body>
     </html>
   );
