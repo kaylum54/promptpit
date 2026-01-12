@@ -27,6 +27,15 @@ export default function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
     }
   }, [user?.email]);
 
+  const handleClose = useCallback(() => {
+    setCategory('general');
+    setMessage('');
+    setEmail(user?.email || '');
+    setError('');
+    setIsSuccess(false);
+    onClose();
+  }, [user?.email, onClose]);
+
   // Auto-close after success
   useEffect(() => {
     if (isSuccess) {
@@ -75,15 +84,6 @@ export default function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
       setIsSubmitting(false);
     }
   };
-
-  const handleClose = useCallback(() => {
-    setCategory('general');
-    setMessage('');
-    setEmail(user?.email || '');
-    setError('');
-    setIsSuccess(false);
-    onClose();
-  }, [user?.email, onClose]);
 
   if (!isOpen) return null;
 
