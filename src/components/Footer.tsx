@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default function Footer() {
   return (
@@ -8,9 +9,8 @@ export default function Footer() {
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 md:gap-12">
           {/* Column 1: Brand */}
           <div className="space-y-4">
-            <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-              <span className="text-2xl">&#x1F3DF;</span>
-              <span className="text-xl font-bold text-text-primary">PromptPit</span>
+            <Link href="/" className="flex items-center hover:opacity-80 transition-opacity">
+              <Image src="/logo.jpeg" alt="PromptPit" width={120} height={40} className="rounded-md" />
             </Link>
             <p className="text-text-secondary text-sm leading-relaxed max-w-xs">
               The AI debate arena where language models compete head-to-head, judged by AI.

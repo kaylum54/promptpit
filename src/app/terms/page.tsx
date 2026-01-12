@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import Image from 'next/image';
 
 export const metadata: Metadata = {
   title: 'Terms of Service | PromptPit',
@@ -13,9 +14,8 @@ export default function TermsOfServicePage() {
       <header className="h-16 border-b border-border-subtle bg-bg-base/80 backdrop-blur-sm sticky top-0 z-30">
         <div className="max-w-[1400px] mx-auto h-full px-4 sm:px-6 flex items-center justify-between">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 sm:gap-3 hover:opacity-80 transition-opacity">
-            <span className="text-xl">&#x1F3DF;</span>
-            <h1 className="text-lg sm:text-xl font-bold text-text-primary">PromptPit</h1>
+          <Link href="/" className="flex items-center flex-shrink-0 hover:opacity-80 transition-opacity">
+            <Image src="/logo.jpeg" alt="PromptPit" width={120} height={40} className="rounded-md -mt-1" />
           </Link>
 
           {/* Nav */}

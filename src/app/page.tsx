@@ -262,9 +262,9 @@ export default function Home() {
         />
         <div className="max-w-[1400px] mx-auto h-full px-4 sm:px-6 flex items-center justify-between">
           {/* Logo */}
-          <div className="flex items-center flex-shrink-0">
-            <Image src="/logo.jpeg" alt="PromptPit" width={120} height={40} className="rounded-md" />
-          </div>
+          <Link href="/" className="flex items-center flex-shrink-0 hover:opacity-80 transition-opacity">
+            <Image src="/logo.jpeg" alt="PromptPit" width={120} height={40} className="rounded-md -mt-1" />
+          </Link>
 
           {/* Nav */}
           <nav className="flex items-center gap-1 sm:gap-2">
