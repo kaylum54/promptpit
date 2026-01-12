@@ -3,15 +3,21 @@
  */
 
 export const PRICING_TIERS = {
+  guest: {
+    name: 'Guest',
+    price: 0,
+    debatesPerMonth: 1,
+    features: ['1 debate per month', '4 AI models'],
+  },
   free: {
     name: 'Free',
     price: 0,
-    debatesPerMonth: 15,
-    features: ['15 debates per month', '4 AI models', 'Basic history'],
+    debatesPerMonth: 6,
+    features: ['6 debates per month', '4 AI models', 'Basic history'],
   },
   pro: {
     name: 'Pro',
-    price: 9.99,
+    price: 11,
     debatesPerMonth: 100,
     features: ['100 debates per month', '4 AI models', 'Full history', 'Priority support'],
   },
@@ -23,6 +29,7 @@ export type TierName = keyof typeof PRICING_TIERS;
  * Mapping of tier names to their debate limits
  */
 export const TIER_LIMITS: Record<TierName, number> = {
+  guest: PRICING_TIERS.guest.debatesPerMonth,
   free: PRICING_TIERS.free.debatesPerMonth,
   pro: PRICING_TIERS.pro.debatesPerMonth,
 } as const;
@@ -36,8 +43,8 @@ export function getDebateLimit(tier: string): number {
   if (tier in TIER_LIMITS) {
     return TIER_LIMITS[tier as TierName];
   }
-  // Default to free tier limit if tier is unknown
-  return TIER_LIMITS.free;
+  // Default to guest tier limit if tier is unknown
+  return TIER_LIMITS.guest;
 }
 
 /**

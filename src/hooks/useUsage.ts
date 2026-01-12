@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@/lib/supabase-browser';
 
 export interface UsageData {
-  tier: 'free' | 'pro';
+  tier: 'guest' | 'free' | 'pro';
   debatesThisMonth: number;
   debatesLimit: number;
   debatesRemaining: number;

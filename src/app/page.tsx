@@ -18,6 +18,7 @@ import SettingsModal from '@/components/SettingsModal';
 import DebateReactions from '@/components/DebateReactions';
 import Leaderboard from '@/components/Leaderboard';
 import ShareButton from '@/components/ShareButton';
+import Footer from '@/components/Footer';
 import { getModelKeys, MODELS } from '@/lib/models';
 import { ARENA_MODES, type ArenaMode } from '@/lib/modes';
 import ModeSelector from '@/components/ModeSelector';
@@ -236,20 +237,14 @@ export default function Home() {
             background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1) 20%, rgba(255, 255, 255, 0.15) 50%, rgba(255, 255, 255, 0.1) 80%, transparent)',
           }}
         />
-        <div className="max-w-[1400px] mx-auto h-full px-6 flex items-center justify-between">
+        <div className="max-w-[1400px] mx-auto h-full px-4 sm:px-6 flex items-center justify-between">
           {/* Logo */}
-          <div className="flex items-center gap-3">
-            <Image src="/logo.jpeg" alt="PromptPit Logo" width={32} height={32} className="rounded-md" />
-            <h1
-              className="text-xl font-bold text-text-primary tracking-wide"
-              style={{ textShadow: '0 0 20px rgba(255, 255, 255, 0.1)' }}
-            >
-              PromptPit
-            </h1>
+          <div className="flex items-center flex-shrink-0">
+            <Image src="/logo.jpeg" alt="PromptPit" width={120} height={40} className="rounded-md" />
           </div>
 
           {/* Nav */}
-          <nav className="flex items-center gap-2">
+          <nav className="flex items-center gap-1 sm:gap-2">
             {/* Gallery Link */}
             <a
               href="/gallery"
@@ -258,6 +253,17 @@ export default function Home() {
             >
               <svg className="w-5 h-5 text-text-secondary group-hover:text-text-primary transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
+              </svg>
+            </a>
+
+            {/* Pricing Link */}
+            <a
+              href="/pricing"
+              className="p-2 rounded-md hover:bg-bg-elevated transition-colors group"
+              title="Pricing"
+            >
+              <svg className="w-5 h-5 text-text-secondary group-hover:text-text-primary transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </a>
 
@@ -288,46 +294,58 @@ export default function Home() {
               <>
                 <button
                   onClick={() => setShowHistory(true)}
-                  className="text-sm font-medium text-text-secondary hover:text-text-primary px-4 py-2 rounded-md hover:bg-bg-elevated transition-colors"
+                  className="text-sm font-medium text-text-secondary hover:text-text-primary px-2 sm:px-4 py-2 rounded-md hover:bg-bg-elevated transition-colors min-h-[44px] flex items-center"
                 >
-                  History
+                  <span className="hidden sm:inline">History</span>
+                  <svg className="w-5 h-5 sm:hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
                 </button>
                 <a
                   href="/analytics"
-                  className="text-sm font-medium text-text-secondary hover:text-text-primary px-4 py-2 rounded-md hover:bg-bg-elevated transition-colors"
+                  className="text-sm font-medium text-text-secondary hover:text-text-primary px-2 sm:px-4 py-2 rounded-md hover:bg-bg-elevated transition-colors min-h-[44px] hidden sm:flex items-center"
                 >
                   Analytics
                 </a>
               </>
             )}
-            {user && usage && !usage.isGuest && (
+            {usage && (
               <UsageBadge
                 debatesRemaining={usage.debatesRemaining}
                 debatesLimit={usage.debatesLimit}
                 tier={usage.tier}
-                onClick={() => window.location.href = '/pricing'}
+                onClick={() => usage.isGuest ? setShowAuthModal(true) : window.location.href = '/pricing'}
               />
             )}
             {isAuthLoading ? (
-              <span className="text-text-muted text-sm">...</span>
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 border-2 border-accent-primary/30 border-t-accent-primary rounded-full animate-spin" />
+                <span className="text-text-muted text-sm hidden sm:inline">Loading...</span>
+              </div>
             ) : user ? (
-              <div className="flex items-center gap-3">
-                <span className="text-text-tertiary text-sm truncate max-w-[150px] hidden sm:inline" title={user.email || ''}>
+              <div className="flex items-center gap-1 sm:gap-3">
+                <span className="text-text-tertiary text-sm truncate max-w-[100px] sm:max-w-[150px] hidden md:inline" title={user.email || ''}>
                   {user.email}
                 </span>
                 <button
                   onClick={() => signOut()}
-                  className="text-sm font-medium text-text-secondary hover:text-text-primary px-4 py-2 rounded-md hover:bg-bg-elevated transition-colors"
+                  className="text-sm font-medium text-text-secondary hover:text-text-primary px-2 sm:px-4 py-2 rounded-md hover:bg-bg-elevated transition-colors min-h-[44px] flex items-center"
                 >
-                  Sign Out
+                  <span className="hidden sm:inline">Sign Out</span>
+                  <svg className="w-5 h-5 sm:hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+                  </svg>
                 </button>
               </div>
             ) : (
               <button
                 onClick={() => setShowAuthModal(true)}
-                className="text-sm font-medium text-text-secondary hover:text-text-primary px-4 py-2 rounded-md hover:bg-bg-elevated transition-colors"
+                className="text-sm font-medium text-text-secondary hover:text-text-primary px-2 sm:px-4 py-2 rounded-md hover:bg-bg-elevated transition-colors min-h-[44px] flex items-center"
               >
-                Sign In
+                <span className="hidden sm:inline">Sign In</span>
+                <svg className="w-5 h-5 sm:hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+                </svg>
               </button>
             )}
           </nav>
@@ -335,7 +353,7 @@ export default function Home() {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 px-6">
+      <main className="flex-1 px-4 sm:px-6">
         <div className="max-w-content mx-auto">
           {/* Viewing History Banner */}
           {isViewingHistory && (
@@ -348,6 +366,33 @@ export default function Home() {
                 className="text-sm font-medium text-accent-primary hover:text-accent-hover"
               >
                 Start New Debate
+              </button>
+            </div>
+          )}
+
+          {/* Guest Sign-up Prompt */}
+          {!user && !isAuthLoading && (
+            <div className="bg-gradient-to-r from-accent-primary/10 to-accent-secondary/10 border border-accent-primary/20 rounded-lg px-4 py-3 mt-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-accent-primary/20 flex items-center justify-center flex-shrink-0">
+                  <svg className="w-4 h-4 text-accent-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-text-primary">
+                    Sign up for 5 extra debates free!
+                  </p>
+                  <p className="text-xs text-text-secondary">
+                    Guests get 1/month. Create an account for 6/month.
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowAuthModal(true)}
+                className="px-4 py-2 bg-accent-primary text-white text-sm font-medium rounded-lg hover:bg-accent-hover transition-colors whitespace-nowrap"
+              >
+                Sign Up Free
               </button>
             </div>
           )}
@@ -521,11 +566,7 @@ export default function Home() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-border-subtle px-6 py-4">
-        <div className="max-w-content mx-auto text-center text-text-muted text-sm">
-          Powered by OpenRouter
-        </div>
-      </footer>
+      <Footer />
 
       {/* Modals */}
       <AuthModal
@@ -547,6 +588,11 @@ export default function Home() {
           debatesLimit={usage.debatesLimit}
           tier={usage.tier}
           monthResetDate={usage.monthResetDate}
+          isAuthenticated={!!user}
+          onAuthRequired={() => {
+            setShowLimitModal(false);
+            setShowAuthModal(true);
+          }}
         />
       )}
       <SettingsModal

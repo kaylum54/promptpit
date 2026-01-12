@@ -11,6 +11,7 @@ import { ARENA_MODES, type ArenaMode } from '@/lib/modes';
 import type { DebateStreamEvent, PromptPitProfile } from '@/lib/types';
 import { createServerSupabaseClient, createServiceRoleClient } from '@/lib/supabase';
 import { canStartDebate, getDebateLimit } from '@/lib/pricing';
+import { rateLimit, RATE_LIMITS, getRateLimitHeaders, createRateLimitResponse } from '@/lib/rate-limit';
 
 /**
  * Generates a system prompt with optional context from previous debate rounds
@@ -241,6 +242,12 @@ function getNextMonthResetDate(): string {
 }
 
 export async function POST(request: NextRequest) {
+  // Check rate limit first (30 requests per minute per IP)
+  const rateLimitResult = rateLimit(request, 'debate', RATE_LIMITS.debate);
+  if (!rateLimitResult.allowed) {
+    return createRateLimitResponse(rateLimitResult);
+  }
+
   // Get authenticated user (if any)
   let userId: string | null = null;
   let userProfile: PromptPitProfile | null = null;
@@ -456,13 +463,15 @@ export async function POST(request: NextRequest) {
     );
   });
 
-  // Return the SSE response
+  // Return the SSE response with rate limit headers
+  const rateLimitHeaders = getRateLimitHeaders(rateLimitResult);
   return new Response(readable, {
     headers: {
       'Content-Type': 'text/event-stream',
       'Cache-Control': 'no-cache, no-transform',
       'Connection': 'keep-alive',
       'X-Accel-Buffering': 'no',
+      ...rateLimitHeaders,
     },
   });
 }

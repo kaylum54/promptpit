@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { User } from '@supabase/supabase-js';
+import { User, Session } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase-browser';
 import type { PromptPitProfile } from '@/lib/types';
 
@@ -120,7 +120,7 @@ export function useAuth(): UseAuthReturn {
 
     // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
+      (_event: string, session: Session | null) => {
         const currentUser = session?.user ?? null;
         setUser(currentUser);
         setIsLoading(false);
@@ -161,10 +161,11 @@ export function useAuth(): UseAuthReturn {
         password,
       });
 
-      const { error } = await Promise.race([signInPromise, timeoutPromise]);
+      const result = await Promise.race([signInPromise, timeoutPromise]);
+      const error = 'error' in result ? result.error : null;
 
       if (error) {
-        return { error: error.message };
+        return { error: typeof error === 'string' ? error : error.message };
       }
 
       return {};

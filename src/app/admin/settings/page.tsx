@@ -152,7 +152,7 @@ export default function AdminSettingsPage() {
           className="inline-flex items-center gap-2 px-4 py-2 bg-purple-500/20 text-purple-400 rounded-lg hover:bg-purple-500/30"
         >
           Open Stripe Dashboard
-          <span>-></span>
+          <span>&rarr;</span>
         </a>
       </div>
     </div>

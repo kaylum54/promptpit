@@ -1,4 +1,5 @@
-import { createBrowserClient, type SupabaseClient } from '@supabase/ssr'
+import { createBrowserClient } from '@supabase/ssr'
+import type { SupabaseClient } from '@supabase/supabase-js'
 
 // Re-export types from the main supabase file for convenience
 export type { Database, Json } from './supabase'

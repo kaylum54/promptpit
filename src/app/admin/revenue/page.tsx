@@ -82,7 +82,19 @@ export default function AdminRevenuePage() {
           </thead>
           <tbody>
             {!data?.subscribers?.length ? (
-              <tr><td colSpan={3} className="px-4 py-8 text-center text-text-muted">No subscribers</td></tr>
+              <tr>
+                <td colSpan={3} className="px-4 py-12">
+                  <div className="flex flex-col items-center justify-center text-center">
+                    <div className="w-12 h-12 rounded-full bg-bg-elevated flex items-center justify-center mb-3">
+                      <svg className="w-6 h-6 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                    <p className="text-text-secondary font-medium mb-1">No Pro subscribers yet</p>
+                    <p className="text-text-muted text-sm">Pro subscribers will appear here when users upgrade</p>
+                  </div>
+                </td>
+              </tr>
             ) : data.subscribers.map((sub) => (
               <tr key={sub.id} className="border-b border-border-subtle hover:bg-bg-elevated/50">
                 <td className="px-4 py-3 text-text-primary">{sub.email || 'Unknown'}</td>

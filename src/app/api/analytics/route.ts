@@ -1,7 +1,15 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { createServerSupabaseClient, createServiceRoleClient } from '@/lib/supabase';
 import { MODELS, type ModelKey } from '@/lib/models';
 
+// Request body type for POST (event tracking)
+interface AnalyticsEventRequest {
+  event_name: string;
+  user_id?: string | null;
+  guest_id?: string | null;
+  properties?: Record<string, unknown> | null;
+  page_url?: string | null;
+}
 interface ModelWinStats {
   name: string;
   key: ModelKey;
@@ -9,12 +17,10 @@ interface ModelWinStats {
   wins: number;
   winRate: number;
 }
-
 interface TimeSeriesPoint {
   date: string;
   count: number;
 }
-
 interface AnalyticsResponse {
   overview: {
     totalDebates: number;
@@ -32,6 +38,53 @@ interface AnalyticsResponse {
     think: number;
     laugh: number;
   };
+}
+/**
+ * POST /api/analytics - Track analytics events
+ *
+ * Accepts analytics events and saves them to the database.
+ */
+export async function POST(request: NextRequest) {
+  try {
+    const body: AnalyticsEventRequest = await request.json();
+
+    // Validate required field
+    if (!body.event_name || typeof body.event_name !== 'string' || body.event_name.trim() === '') {
+      return NextResponse.json(
+        { error: 'event_name is required' },
+        { status: 400 }
+      );
+    }
+
+    // Prepare event data
+    const eventData = {
+      event_name: body.event_name.trim(),
+      user_id: body.user_id || null,
+      guest_id: body.guest_id || null,
+      properties: body.properties || null,
+      page_url: body.page_url || null,
+    };
+
+    // Use service role client for inserts to bypass RLS
+    const adminClient = createServiceRoleClient();
+
+    const { error } = await adminClient
+      .from('analytics_events')
+      .insert(eventData);
+
+    if (error) {
+      // Log the error but return 200 to not break client (silent-friendly)
+      console.error('Error saving analytics event:', error);
+      // Still return 200 for silent-friendly behavior
+      return NextResponse.json({ success: false, logged: false }, { status: 200 });
+    }
+
+    return NextResponse.json({ success: true }, { status: 200 });
+  } catch (error) {
+    // Log the error but return 200 to not break client (silent-friendly)
+    console.error('Error in POST /api/analytics:', error);
+    return NextResponse.json({ success: false, logged: false }, { status: 200 });
+  }
 }
 
 /**
@@ -195,7 +248,6 @@ export async function GET() {
     );
   }
 }
-
 // Helper to normalize model names
 function normalizeModelName(name: string): string {
   const lowerName = name.toLowerCase();
@@ -208,3 +260,4 @@ function normalizeModelName(name: string): string {
   };
   return nameMap[lowerName] || name;
 }
+

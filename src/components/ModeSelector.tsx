@@ -12,7 +12,7 @@ export default function ModeSelector({ currentMode, onModeChange, disabled = fal
   const modes = Object.values(ARENA_MODES);
 
   return (
-    <div className="flex items-center gap-1 bg-bg-surface/50 rounded-xl p-1">
+    <div className="flex flex-wrap items-center gap-1 bg-bg-surface/50 rounded-xl p-1">
       {modes.map((mode) => {
         const isActive = currentMode === mode.id;
         return (
@@ -22,8 +22,8 @@ export default function ModeSelector({ currentMode, onModeChange, disabled = fal
             disabled={disabled}
             title={mode.description}
             className={`
-              flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium
-              transition-all duration-200 border transform
+              flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 rounded-lg text-sm font-medium
+              transition-all duration-200 border transform min-h-[44px]
               ${isActive
                 ? 'border-transparent'
                 : 'bg-bg-surface border-border-subtle text-text-secondary hover:text-text-primary hover:border-border hover:translate-y-[-1px] hover:shadow-sm'

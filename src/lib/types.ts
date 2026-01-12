@@ -103,6 +103,8 @@ export interface PromptPitProfile {
   role?: 'user' | 'admin';  // Optional, defaults to 'user' for backwards compatibility
   stripe_customer_id?: string;
   stripe_subscription_id?: string;
+  subscription_status?: 'active' | 'past_due' | 'canceled' | 'incomplete' | null;
+  subscription_period_end?: string;
   debates_this_month: number;
   month_reset_date: string;
   created_at: string;

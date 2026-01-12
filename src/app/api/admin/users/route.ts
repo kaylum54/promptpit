@@ -59,7 +59,8 @@ export async function GET(request: NextRequest) {
   }
 
   // Get debate counts for each user
-  const userIds = users?.map(u => u.id) || [];
+  type UserRow = { id: string; email: string | null; tier: string; role: string | null; created_at: string; debates_this_month: number };
+  const userIds = (users as UserRow[] | null)?.map((u: UserRow) => u.id) || [];
   const debateCountMap: Record<string, number> = {};
 
   if (userIds.length > 0) {
@@ -68,7 +69,7 @@ export async function GET(request: NextRequest) {
       .select('user_id')
       .in('user_id', userIds);
 
-    debateCounts?.forEach(d => {
+    debateCounts?.forEach((d: { user_id: string | null }) => {
       if (d.user_id) {
         debateCountMap[d.user_id] = (debateCountMap[d.user_id] || 0) + 1;
       }
@@ -76,7 +77,7 @@ export async function GET(request: NextRequest) {
   }
 
   // Add debate counts to users
-  const usersWithCounts = users?.map(user => ({
+  const usersWithCounts = (users as UserRow[] | null)?.map((user: UserRow) => ({
     ...user,
     debate_count: debateCountMap[user.id] || 0,
   }));

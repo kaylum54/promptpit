@@ -15,6 +15,8 @@ const navItems: NavItem[] = [
   { label: 'Users', href: '/admin/users', icon: '[U]' },
   { label: 'Debates', href: '/admin/debates', icon: '[D]' },
   { label: 'Revenue', href: '/admin/revenue', icon: '[$]' },
+  { label: 'Analytics', href: '/admin/analytics', icon: '[A]' },
+  { label: 'Feedback', href: '/admin/feedback', icon: '[F]' },
   { label: 'Settings', href: '/admin/settings', icon: '[S]' },
 ];
 

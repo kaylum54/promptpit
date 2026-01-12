@@ -118,7 +118,21 @@ export default function AdminDebatesPage() {
                 <td className="px-4 py-3"><div className="h-4 w-16 bg-bg-elevated rounded animate-pulse ml-auto" /></td>
               </tr>
             )) : debates.length === 0 ? (
-              <tr><td colSpan={5} className="px-4 py-8 text-center text-text-muted">No debates</td></tr>
+              <tr>
+                <td colSpan={5} className="px-4 py-12">
+                  <div className="flex flex-col items-center justify-center text-center">
+                    <div className="w-12 h-12 rounded-full bg-bg-elevated flex items-center justify-center mb-3">
+                      <svg className="w-6 h-6 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                      </svg>
+                    </div>
+                    <p className="text-text-secondary font-medium mb-1">No debates found</p>
+                    <p className="text-text-muted text-sm">
+                      {search ? 'Try adjusting your search terms' : 'Debates will appear here once users start debating'}
+                    </p>
+                  </div>
+                </td>
+              </tr>
             ) : debates.map((d) => (
               <tr key={d.id} className="border-b border-border-subtle hover:bg-bg-elevated/50">
                 <td className="px-4 py-3 text-text-primary">{truncate(d.prompt, 50)}</td>

@@ -42,19 +42,20 @@ export async function GET(request: NextRequest) {
   }
 
   // Get user emails for debates
-  const userIds = [...new Set(debates?.filter(d => d.user_id).map(d => d.user_id) || [])];
-  let userMap: Record<string, string> = {};
+  type DebateRow = { id: string; prompt: string; user_id: string | null; verdict: { winner?: string } | null; created_at: string };
+  const userIds = Array.from(new Set((debates as DebateRow[] | null)?.filter((d: DebateRow) => d.user_id).map((d: DebateRow) => d.user_id) || [])) as string[];
+  const userMap: Record<string, string> = {};
 
   if (userIds.length > 0) {
     const { data: users } = await supabase
       .from('promptpit_profiles')
       .select('id, email')
       .in('id', userIds);
-    users?.forEach(u => { userMap[u.id] = u.email || 'Unknown'; });
+    users?.forEach((u: { id: string; email: string | null }) => { userMap[u.id] = u.email || 'Unknown'; });
   }
 
   // Add user emails and extract winner
-  const debatesWithUsers = debates?.map(d => ({
+  const debatesWithUsers = (debates as DebateRow[] | null)?.map((d: DebateRow) => ({
     ...d,
     user_email: d.user_id ? userMap[d.user_id] || 'Unknown' : 'Guest',
     winner: d.verdict?.winner || null,
@@ -63,7 +64,7 @@ export async function GET(request: NextRequest) {
   // Filter by winner if specified
   let filteredDebates = debatesWithUsers;
   if (winner && winner !== 'all') {
-    filteredDebates = debatesWithUsers?.filter(d => d.winner === winner);
+    filteredDebates = debatesWithUsers?.filter((d: { winner: string | null }) => d.winner === winner);
   }
 
   // Get stats

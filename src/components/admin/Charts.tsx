@@ -53,8 +53,9 @@ const CustomTooltip = ({
   valueLabel,
 }: {
   active?: boolean;
-  payload?: Array<{ value: number }>;
-  label?: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  payload?: readonly any[];
+  label?: string | number;
   valueLabel: string;
 }) => {
   if (active && payload && payload.length) {

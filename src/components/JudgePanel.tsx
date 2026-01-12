@@ -84,7 +84,8 @@ export default function JudgePanel({
   const getHighestScore = (category: CategoryKey): number => {
     let highest = 0;
     modelKeys.forEach((modelKey) => {
-      const score = scores[modelKey]?.[category]?.score || 0;
+      const modelScores = scores[modelKey] as Record<string, { score: number; rationale: string } | undefined> | undefined;
+      const score = modelScores?.[category]?.score || 0;
       if (score > highest) highest = score;
     });
     return highest;
@@ -160,7 +161,8 @@ export default function JudgePanel({
                 </h3>
                 <div className="space-y-3">
                   {modelKeys.map((modelKey) => {
-                    const modelScore = scores[modelKey]?.[category];
+                    const modelScoresObj = scores[modelKey] as Record<string, { score: number; rationale: string } | undefined> | undefined;
+                    const modelScore = modelScoresObj?.[category];
                     const model = MODELS[modelKey as ModelKey];
                     const color = getModelColor(model?.name || modelKey);
                     const isHighest = modelScore?.score === highestScore;

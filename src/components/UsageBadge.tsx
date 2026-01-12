@@ -3,7 +3,7 @@
 interface UsageBadgeProps {
   debatesRemaining: number;
   debatesLimit: number;
-  tier: 'free' | 'pro';
+  tier: 'guest' | 'free' | 'pro';
   onClick?: () => void;
 }
 

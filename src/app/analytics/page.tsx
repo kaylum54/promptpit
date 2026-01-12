@@ -143,12 +143,86 @@ export default function AnalyticsPage() {
             </p>
           </div>
 
-          {/* Loading */}
+          {/* Loading Skeleton */}
           {isLoading && (
-            <div className="flex flex-col items-center justify-center py-20">
-              <div className="w-10 h-10 border-2 border-accent-primary border-t-transparent rounded-full animate-spin mb-4" />
-              <p className="text-text-tertiary">Loading analytics...</p>
-            </div>
+            <>
+              {/* Overview Cards Skeleton */}
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+                {Array.from({ length: 5 }).map((_, index) => (
+                  <div
+                    key={index}
+                    className="bg-bg-elevated border border-border-subtle rounded-xl p-5 text-center animate-pulse"
+                    style={{ animationDelay: `${index * 75}ms` }}
+                  >
+                    <div className="h-9 bg-bg-subtle rounded w-16 mx-auto mb-2" />
+                    <div className="h-3 bg-bg-subtle rounded w-20 mx-auto" />
+                  </div>
+                ))}
+              </div>
+
+              {/* Two-column layout Skeleton */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {/* Model Win Rates Skeleton */}
+                <div className="bg-bg-elevated border border-border-subtle rounded-xl p-6 animate-pulse">
+                  <div className="h-5 bg-bg-subtle rounded w-32 mb-4" />
+                  <div className="h-4 bg-bg-subtle rounded w-48 mb-4" />
+                  <div className="space-y-4">
+                    {Array.from({ length: 4 }).map((_, index) => (
+                      <div key={index} style={{ animationDelay: `${index * 100}ms` }}>
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <div className="w-3 h-3 bg-bg-subtle rounded-full" />
+                            <div className="h-4 bg-bg-subtle rounded w-16" />
+                          </div>
+                          <div className="h-4 bg-bg-subtle rounded w-24" />
+                        </div>
+                        <div className="h-2 bg-bg-subtle rounded-full w-full" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Reaction Breakdown Skeleton */}
+                <div className="bg-bg-elevated border border-border-subtle rounded-xl p-6 animate-pulse">
+                  <div className="h-5 bg-bg-subtle rounded w-40 mb-4" />
+                  <div className="grid grid-cols-2 gap-4">
+                    {Array.from({ length: 4 }).map((_, index) => (
+                      <div
+                        key={index}
+                        className="bg-bg-base rounded-lg p-4 text-center"
+                        style={{ animationDelay: `${index * 100}ms` }}
+                      >
+                        <div className="h-8 bg-bg-subtle rounded w-8 mx-auto mb-2" />
+                        <div className="h-6 bg-bg-subtle rounded w-12 mx-auto mb-1" />
+                        <div className="h-3 bg-bg-subtle rounded w-10 mx-auto" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Activity Chart Skeleton */}
+              <div className="mt-8 bg-bg-elevated border border-border-subtle rounded-xl p-6 animate-pulse">
+                <div className="h-5 bg-bg-subtle rounded w-48 mb-4" />
+                <div className="h-40 flex items-end gap-1">
+                  {Array.from({ length: 30 }).map((_, index) => (
+                    <div
+                      key={index}
+                      className="flex-1 bg-bg-subtle rounded-sm"
+                      style={{
+                        height: `${Math.random() * 80 + 10}%`,
+                        animationDelay: `${index * 30}ms`,
+                      }}
+                    />
+                  ))}
+                </div>
+                <div className="flex justify-between mt-3">
+                  <div className="h-3 bg-bg-subtle rounded w-20" />
+                  <div className="h-3 bg-bg-subtle rounded w-24" />
+                  <div className="h-3 bg-bg-subtle rounded w-12" />
+                </div>
+              </div>
+            </>
           )}
 
           {/* Error */}

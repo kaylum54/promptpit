@@ -43,8 +43,8 @@ export async function GET() {
     .select('*', { count: 'exact', head: true })
     .gte('created_at', weekAgo.toISOString());
 
-  // Calculate MRR (Pro subscribers × $9/month - adjust price as needed)
-  const PRO_PRICE = 9;
+  // Calculate MRR (Pro subscribers × $11/month - adjust price as needed)
+  const PRO_PRICE = 11;
   const mrr = (proSubscribers || 0) * PRO_PRICE;
 
   // Get user growth data (last 30 days)

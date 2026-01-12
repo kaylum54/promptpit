@@ -7,7 +7,7 @@ import type { PromptPitProfile } from '@/lib/types';
  * Response type for the usage endpoint
  */
 interface UsageResponse {
-  tier: 'free' | 'pro';
+  tier: 'guest' | 'free' | 'pro';
   debatesThisMonth: number;
   debatesLimit: number;
   debatesRemaining: number;
@@ -30,7 +30,7 @@ export async function GET() {
     // Get current user
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
-    // If no user (guest), return default free tier with 0 usage
+    // If no user (guest), return guest tier with 1 debate limit
     if (authError || !user) {
       const nextMonth = new Date();
       nextMonth.setMonth(nextMonth.getMonth() + 1);
@@ -38,11 +38,11 @@ export async function GET() {
       nextMonth.setHours(0, 0, 0, 0);
 
       const guestResponse: UsageResponse = {
-        tier: 'free',
+        tier: 'guest',
         debatesThisMonth: 0,
-        debatesLimit: getDebateLimit('free'),
-        debatesRemaining: getDebatesRemaining(0, 'free'),
-        canStartDebate: canStartDebate(0, 'free'),
+        debatesLimit: getDebateLimit('guest'),
+        debatesRemaining: getDebatesRemaining(0, 'guest'),
+        canStartDebate: canStartDebate(0, 'guest'),
         monthResetDate: nextMonth.toISOString(),
         isGuest: true,
       };

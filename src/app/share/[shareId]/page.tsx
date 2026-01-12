@@ -109,12 +109,91 @@ export default function SharePage() {
       {/* Main Content */}
       <main className="flex-1 px-6 py-8">
         <div className="max-w-content mx-auto">
-          {/* Loading */}
+          {/* Loading Skeleton */}
           {isLoading && (
-            <div className="flex flex-col items-center justify-center py-20">
-              <div className="w-10 h-10 border-2 border-accent-primary border-t-transparent rounded-full animate-spin mb-4" />
-              <p className="text-text-tertiary">Loading shared debate...</p>
-            </div>
+            <>
+              {/* Shared Badge Skeleton */}
+              <div className="bg-bg-elevated border border-border-subtle rounded-lg px-4 py-3 mb-6 flex items-center justify-between animate-pulse">
+                <div className="flex items-center gap-2">
+                  <div className="w-5 h-5 bg-bg-subtle rounded" />
+                  <div className="h-4 bg-bg-subtle rounded w-24" />
+                </div>
+                <div className="h-3 bg-bg-subtle rounded w-20" />
+              </div>
+
+              {/* Prompt Skeleton */}
+              <div className="bg-bg-elevated border border-border-subtle rounded-xl p-6 mb-6 animate-pulse">
+                <div className="h-3 bg-bg-subtle rounded w-24 mb-3" />
+                <div className="space-y-2">
+                  <div className="h-5 bg-bg-subtle rounded w-full" />
+                  <div className="h-5 bg-bg-subtle rounded w-4/5" />
+                </div>
+              </div>
+
+              {/* Model Panels Skeleton */}
+              <section className="mb-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {Array.from({ length: 2 }).map((_, index) => (
+                    <div
+                      key={index}
+                      className="bg-bg-elevated border border-border-subtle rounded-xl overflow-hidden animate-pulse"
+                      style={{ animationDelay: `${index * 150}ms` }}
+                    >
+                      {/* Header */}
+                      <div className="border-b border-border-subtle p-4 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className="w-3 h-3 bg-bg-subtle rounded-full" />
+                          <div className="h-4 bg-bg-subtle rounded w-20" />
+                        </div>
+                        <div className="h-5 bg-bg-subtle rounded w-16" />
+                      </div>
+                      {/* Content */}
+                      <div className="p-4 min-h-[200px] space-y-2">
+                        <div className="h-4 bg-bg-subtle rounded w-full" />
+                        <div className="h-4 bg-bg-subtle rounded w-11/12" />
+                        <div className="h-4 bg-bg-subtle rounded w-4/5" />
+                        <div className="h-4 bg-bg-subtle rounded w-full" />
+                        <div className="h-4 bg-bg-subtle rounded w-3/4" />
+                        <div className="h-4 bg-bg-subtle rounded w-5/6" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+
+              {/* Judge Panel Skeleton */}
+              <div className="border border-border-subtle rounded-2xl p-8 animate-pulse">
+                <div className="text-center mb-6">
+                  <div className="h-3 bg-bg-subtle rounded w-20 mx-auto mb-2" />
+                  <div className="w-8 h-8 bg-bg-subtle rounded mx-auto" />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                  {Array.from({ length: 3 }).map((_, index) => (
+                    <div key={index} className="bg-bg-base border border-border-subtle rounded-lg p-4">
+                      <div className="h-3 bg-bg-subtle rounded w-20 mb-3" />
+                      <div className="space-y-3">
+                        {Array.from({ length: 2 }).map((_, i) => (
+                          <div key={i}>
+                            <div className="flex items-center justify-between mb-1">
+                              <div className="h-3 bg-bg-subtle rounded w-16" />
+                              <div className="h-3 bg-bg-subtle rounded w-8" />
+                            </div>
+                            <div className="h-1.5 bg-bg-subtle rounded-full" />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                {/* Winner Skeleton */}
+                <div className="pt-6 border-t border-border-subtle text-center">
+                  <div className="w-10 h-10 bg-bg-subtle rounded mx-auto mb-3" />
+                  <div className="h-3 bg-bg-subtle rounded w-16 mx-auto mb-2" />
+                  <div className="h-8 bg-bg-subtle rounded w-24 mx-auto mb-4" />
+                  <div className="h-4 bg-bg-subtle rounded w-3/4 mx-auto" />
+                </div>
+              </div>
+            </>
           )}
 
           {/* Error */}
