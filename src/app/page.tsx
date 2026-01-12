@@ -62,7 +62,6 @@ export default function Home() {
   const [showLimitModal, setShowLimitModal] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showLeaderboard, setShowLeaderboard] = useState(false);
-  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   // Blind mode - hide model names until verdict is revealed
   const [blindMode, setBlindMode] = useState(false);
   // Arena mode state (legacy ModeSelector)
