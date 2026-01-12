@@ -21,6 +21,7 @@ import Leaderboard from '@/components/Leaderboard';
 import ShareButton from '@/components/ShareButton';
 import Footer from '@/components/Footer';
 import ArenaSelector from '@/components/ArenaSelector';
+import HomepageExplainer from '@/components/HomepageExplainer';
 import SuggestedPrompts from '@/components/SuggestedPrompts';
 import StatsBar from '@/components/StatsBar';
 import RecentBattles from '@/components/RecentBattles';
@@ -431,6 +432,11 @@ export default function Home() {
                 {completedRounds.length} previous round{completedRounds.length !== 1 ? 's' : ''}
               </span>
             </div>
+          )}
+
+          {/* Homepage Explainer - only show when not viewing history and no debate content */}
+          {!isViewingHistory && !hasContent && !isDebating && (
+            <HomepageExplainer />
           )}
 
           {/* Arena Selector */}
