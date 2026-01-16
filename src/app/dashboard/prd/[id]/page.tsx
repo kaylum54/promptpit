@@ -184,7 +184,7 @@ export default function PRDBuilderPage() {
             <span className="text-3xl">📄</span>
           </div>
           <h2 className="text-xl font-semibold text-gray-900 mb-2">PRD not found</h2>
-          <p className="text-gray-500">This PRD may have been deleted or you don't have access.</p>
+          <p className="text-gray-500">This PRD may have been deleted or you don&apos;t have access.</p>
         </div>
       </div>
     );

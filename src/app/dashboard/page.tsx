@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useDashboard } from '@/contexts/DashboardContext';
 import { DashboardHome } from '@/components/dashboard/DashboardHome';
 
-export default function DashboardPage() {
+function DashboardPageContent() {
   const { prds, user } = useDashboard();
   const searchParams = useSearchParams();
   const [showWelcome, setShowWelcome] = useState(false);
@@ -82,5 +82,13 @@ export default function DashboardPage() {
         stats={stats}
       />
     </>
+  );
+}
+
+export default function DashboardPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center h-full"><span className="text-gray-400">Loading...</span></div>}>
+      <DashboardPageContent />
+    </Suspense>
   );
 }

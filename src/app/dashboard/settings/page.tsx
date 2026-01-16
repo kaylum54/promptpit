@@ -157,7 +157,7 @@ function GeneralSettings({
       onUpdate({ ...settings, ...formData });
       setSaveMessage({ type: 'success', text: 'Settings saved successfully' });
       setTimeout(() => setSaveMessage(null), 3000);
-    } catch (err) {
+    } catch {
       setSaveMessage({ type: 'error', text: 'Failed to save settings' });
     } finally {
       setIsSaving(false);

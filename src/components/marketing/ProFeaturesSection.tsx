@@ -62,7 +62,7 @@ export function ProFeaturesSection() {
             </h3>
 
             <p className="text-gray-500 mb-6 leading-relaxed">
-              Phase-by-phase security checklists as you build. Don't ship vulnerabilities.
+              Phase-by-phase security checklists as you build. Don&apos;t ship vulnerabilities.
             </p>
 
             {/* Checklist */}
@@ -189,15 +189,15 @@ export function ProFeaturesSection() {
               font-mono text-xs
               text-gray-300
             ">
-              <div className="text-gray-500 mb-2">// Auto-filled with your PRD context</div>
+              <div className="text-gray-500 mb-2">{/* Auto-filled with your PRD context */}</div>
               <div className="text-gray-100">
-                "I'm implementing auth from my PRD.
+                &quot;I&apos;m implementing auth from my PRD.
               </div>
               <div className="text-gray-100">
                 Stack: Next.js + Supabase.
               </div>
               <div className="text-gray-400">
-                Error: <span className="text-gray-500">[paste here]</span>"
+                Error: <span className="text-gray-500">[paste here]</span>&quot;
               </div>
             </div>
           </div>

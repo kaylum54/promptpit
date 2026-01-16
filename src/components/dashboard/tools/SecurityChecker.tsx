@@ -77,7 +77,7 @@ interface Project {
   name: string;
   description?: string;
   created_at: string;
-  prd_content?: any;
+  prd_content?: Record<string, unknown>;
 }
 
 // ============================================================================
@@ -146,21 +146,10 @@ function analyzeSecurityFromPRD(prd: PRDContent): SecurityVulnerability[] {
     r.path.includes('password')
   );
   const inputEndpoints = prd.apiRoutes.filter(r => r.acceptsUserInput);
-  const publicEndpoints = prd.apiRoutes.filter(r => !r.requiresAuth && r.acceptsUserInput);
 
   // Get categorized features
   const fileUploadFeatures = prd.coreFeatures.filter(f => f.fileUpload);
   const paymentFeatures = prd.coreFeatures.filter(f => f.payments);
-  const sensitiveDataFeatures = prd.coreFeatures.filter(f => f.sensitiveData);
-
-  // Get sensitive tables
-  const sensitiveTables = prd.databaseSchema.tables.filter(t =>
-    t.fields.some(f => f.sensitive ||
-      ['password', 'ssn', 'credit_card', 'token', 'secret', 'key', 'hash'].some(s =>
-        f.name.toLowerCase().includes(s)
-      )
-    )
-  );
 
   // ====== VULNERABILITY 1: Auth Rate Limiting ======
   if (authEndpoints.length > 0) {
@@ -1358,10 +1347,44 @@ jobs:
 // HELPER: Extract PRD content from raw data
 // ============================================================================
 
+interface RawPRDContent {
+  projectName?: string;
+  problemStatement?: string;
+  problem?: string;
+  targetAudience?: string;
+  audience?: string;
+  techStack?: {
+    frontend?: string;
+    backend?: string;
+    database?: string;
+    auth?: string;
+    hosting?: string;
+    storage?: string;
+    payments?: string;
+  };
+  architecture?: {
+    techStack?: {
+      frontend?: string;
+      backend?: string;
+      database?: string;
+      auth?: string;
+      hosting?: string;
+      storage?: string;
+      payments?: string;
+    };
+  };
+  features?: Record<string, unknown>[];
+  coreFeatures?: Record<string, unknown>[];
+  databaseSchema?: { tables?: Record<string, unknown>[] };
+  schema?: { tables?: Record<string, unknown>[] };
+  apiRoutes?: Record<string, unknown>[];
+  endpoints?: Record<string, unknown>[];
+}
+
 function extractPRDContent(project: Project): PRDContent | null {
   if (!project.prd_content) return null;
 
-  const prd = project.prd_content;
+  const prd = project.prd_content as RawPRDContent;
 
   // Extract tech stack from architecture phase
   const techStack = {
@@ -1375,57 +1398,57 @@ function extractPRDContent(project: Project): PRDContent | null {
   };
 
   // Extract features
-  const coreFeatures = (prd.features || prd.coreFeatures || []).map((f: any, i: number) => ({
-    id: f.id || `feature-${i}`,
-    name: f.name || f.title || `Feature ${i + 1}`,
-    description: f.description || '',
-    userInput: f.userInput ?? f.acceptsInput ?? true,
-    fileUpload: f.fileUpload ?? f.hasFileUpload ?? false,
-    payments: f.payments ?? f.hasPayments ?? false,
-    sensitiveData: f.sensitiveData ?? f.hasSensitiveData ?? false,
-    publicFacing: f.publicFacing ?? f.isPublic ?? true,
-    apiEndpoints: f.apiEndpoints || f.endpoints || [],
+  const coreFeatures = (prd.features || prd.coreFeatures || []).map((f: Record<string, unknown>, i: number) => ({
+    id: (f.id as string) || `feature-${i}`,
+    name: (f.name || f.title || `Feature ${i + 1}`) as string,
+    description: (f.description || '') as string,
+    userInput: ((f.userInput ?? f.acceptsInput ?? true) as boolean),
+    fileUpload: ((f.fileUpload ?? f.hasFileUpload ?? false) as boolean),
+    payments: ((f.payments ?? f.hasPayments ?? false) as boolean),
+    sensitiveData: ((f.sensitiveData ?? f.hasSensitiveData ?? false) as boolean),
+    publicFacing: ((f.publicFacing ?? f.isPublic ?? true) as boolean),
+    apiEndpoints: (f.apiEndpoints || f.endpoints || []) as string[],
   }));
 
   // Extract database schema
   const databaseSchema = {
-    tables: (prd.databaseSchema?.tables || prd.schema?.tables || []).map((t: any) => ({
-      name: t.name || 'unknown',
-      fields: (t.fields || t.columns || []).map((f: any) => ({
-        name: f.name || f.column || 'unknown',
-        type: f.type || 'string',
-        sensitive: f.sensitive ?? ['password', 'token', 'secret', 'key'].some(s =>
-          (f.name || '').toLowerCase().includes(s)
+    tables: (prd.databaseSchema?.tables || prd.schema?.tables || []).map((t: Record<string, unknown>) => ({
+      name: (t.name as string) || 'unknown',
+      fields: ((t.fields || t.columns || []) as Record<string, unknown>[]).map((f: Record<string, unknown>) => ({
+        name: (f.name || f.column || 'unknown') as string,
+        type: (f.type || 'string') as string,
+        sensitive: (f.sensitive as boolean) ?? ['password', 'token', 'secret', 'key'].some(s =>
+          ((f.name as string) || '').toLowerCase().includes(s)
         ),
       })),
-      hasUserData: t.hasUserData ?? (t.name || '').toLowerCase().includes('user'),
+      hasUserData: (t.hasUserData as boolean) ?? ((t.name as string) || '').toLowerCase().includes('user'),
     })),
   };
 
   // Extract API routes
-  const apiRoutes = (prd.apiRoutes || prd.endpoints || []).map((r: any) => ({
-    path: r.path || r.endpoint || '/api/unknown',
-    method: r.method || 'GET',
-    description: r.description || '',
-    requiresAuth: r.requiresAuth ?? r.authenticated ?? true,
-    acceptsUserInput: r.acceptsUserInput ?? r.hasInput ?? (r.method !== 'GET'),
+  const apiRoutes = (prd.apiRoutes || prd.endpoints || []).map((r: Record<string, unknown>) => ({
+    path: (r.path || r.endpoint || '/api/unknown') as string,
+    method: (r.method || 'GET') as string,
+    description: (r.description || '') as string,
+    requiresAuth: (r.requiresAuth ?? r.authenticated ?? true) as boolean,
+    acceptsUserInput: (r.acceptsUserInput ?? r.hasInput ?? (r.method !== 'GET')) as boolean,
   }));
 
   // If no API routes defined, generate some based on features
   if (apiRoutes.length === 0 && coreFeatures.length > 0) {
-    coreFeatures.forEach((f: any) => {
+    coreFeatures.forEach((f) => {
       apiRoutes.push({
-        path: `/api/${f.name.toLowerCase().replace(/\s+/g, '-')}`,
+        path: `/api/${String(f.name).toLowerCase().replace(/\s+/g, '-')}`,
         method: 'POST',
-        description: f.description,
+        description: String(f.description),
         requiresAuth: true,
-        acceptsUserInput: f.userInput,
+        acceptsUserInput: Boolean(f.userInput),
       });
     });
   }
 
   // Add common auth endpoints if auth is configured
-  if (techStack.auth && !apiRoutes.some((r: any) => r.path.includes('auth'))) {
+  if (techStack.auth && !apiRoutes.some((r) => r.path.includes('auth'))) {
     apiRoutes.push(
       { path: '/api/auth/login', method: 'POST', description: 'User login', requiresAuth: false, acceptsUserInput: true },
       { path: '/api/auth/register', method: 'POST', description: 'User registration', requiresAuth: false, acceptsUserInput: true },
@@ -1470,7 +1493,7 @@ export function SecurityChecker() {
         if (!res.ok) throw new Error('Failed to fetch projects');
         const data = await res.json();
         setProjects(data.prds || []);
-      } catch (err) {
+      } catch {
         setError('Failed to load projects');
       } finally {
         setIsLoading(false);
@@ -1702,7 +1725,7 @@ export function SecurityChecker() {
                 <div className="px-5 py-4 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white">
                   <h2 className="text-sm font-semibold text-gray-900">Detected Vulnerabilities</h2>
                   <p className="text-xs text-gray-500 mt-0.5">
-                    Based on {selectedProject?.name}'s PRD
+                    Based on {selectedProject?.name}&apos;s PRD
                   </p>
                 </div>
 

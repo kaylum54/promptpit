@@ -337,7 +337,7 @@ export function PRDBuilder({
             <div className="mb-8">
               <h3 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
                 <span className="w-1 h-4 rounded-full bg-gradient-to-b from-gray-600 to-gray-400" />
-                What we're defining
+                What we&apos;re defining
               </h3>
               <ul className="space-y-2.5">
                 {phase.whatWeDefine.map((item, i) => (
@@ -586,10 +586,10 @@ function WelcomeMessage({ phase, projectName }: { phase: Phase; projectName: str
         <span className="text-3xl">{phase.icon}</span>
       </div>
       <h2 className="text-2xl font-semibold text-gray-900 mb-2">
-        Let's build {projectName}
+        Let&apos;s build {projectName}
       </h2>
       <p className="text-gray-500 mb-8 max-w-md mx-auto leading-relaxed">
-        We'll start by {phase.description.toLowerCase()}. I'll ask you some questions to understand your vision.
+        We&apos;ll start by {phase.description.toLowerCase()}. I&apos;ll ask you some questions to understand your vision.
       </p>
 
       {/* Initial prompt from AI will appear here */}
@@ -693,7 +693,7 @@ function DebateMessage({ debate }: { debate: PRDDebate }) {
                     )}
                   </div>
                   <p className="font-semibold text-gray-900 mb-1">{response.recommendation}</p>
-                  <p className="text-xs text-gray-500 leading-relaxed">"{response.reasoning}"</p>
+                  <p className="text-xs text-gray-500 leading-relaxed">&quot;{response.reasoning}&quot;</p>
                 </div>
               );
             })}

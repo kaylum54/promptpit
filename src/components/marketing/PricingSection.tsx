@@ -121,7 +121,7 @@ export function PricingSection() {
         {/* Testimonial */}
         <div className="mt-16 text-center max-w-2xl mx-auto">
           <blockquote className="text-lg text-gray-600 italic mb-3">
-            "I built 3 SaaS products this month using PromptPit. The security checklist alone saved me from shipping auth bugs. Worth every penny."
+            &quot;I built 3 SaaS products this month using PromptPit. The security checklist alone saved me from shipping auth bugs. Worth every penny.&quot;
           </blockquote>
           <cite className="text-sm text-gray-400 not-italic">— @indie_hacker_dan</cite>
         </div>

@@ -26,7 +26,7 @@ interface AdminModule {
 interface Project {
   id: string;
   name: string;
-  prd_content?: any;
+  prd_content?: Record<string, unknown>;
 }
 
 // ============================================================================
@@ -233,9 +233,24 @@ const colorConfig: Record<string, { bg: string; border: string; text: string; li
 // HELPER: Extract tech stack from PRD
 // ============================================================================
 
+interface PRDContent {
+  techStack?: {
+    frontend?: string;
+    database?: string;
+    auth?: string;
+  };
+  architecture?: {
+    techStack?: {
+      frontend?: string;
+      database?: string;
+      auth?: string;
+    };
+  };
+}
+
 function extractTechStack(project: Project): { frontend: string; database: string; auth: string } | null {
   if (!project.prd_content) return null;
-  const prd = project.prd_content;
+  const prd = project.prd_content as PRDContent;
 
   return {
     frontend: prd.techStack?.frontend || prd.architecture?.techStack?.frontend || 'Next.js',
@@ -257,7 +272,6 @@ export function AdminBlueprint() {
   const [selectedModules, setSelectedModules] = useState<string[]>(['users', 'analytics', 'settings', 'audit']);
   const [hoveredModule, setHoveredModule] = useState<string | null>(null);
   const [activeDetailModule, setActiveDetailModule] = useState<string | null>('users');
-  const [isGenerating, setIsGenerating] = useState(false);
   const [copiedPrompt, setCopiedPrompt] = useState(false);
 
   // Fetch projects
@@ -272,7 +286,7 @@ export function AdminBlueprint() {
         if (prds.length > 0) {
           setSelectedProjectId(prds[0].id);
         }
-      } catch (err) {
+      } catch {
         console.error('Failed to load projects');
       } finally {
         setIsLoading(false);
@@ -316,12 +330,6 @@ export function AdminBlueprint() {
 
   const deselectAll = () => {
     setSelectedModules([]);
-  };
-
-  const handleGenerate = async () => {
-    setIsGenerating(true);
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    setIsGenerating(false);
   };
 
   // Generate Claude Code prompt
@@ -407,7 +415,7 @@ Please generate all files with complete, production-ready code.`;
           </div>
           <h2 className="text-2xl font-bold text-gray-900 mb-3">Complete a PRD First</h2>
           <p className="text-gray-500 mb-6">
-            The Admin Blueprint generates code tailored to your project's tech stack and database schema.
+            The Admin Blueprint generates code tailored to your project&apos;s tech stack and database schema.
           </p>
           <Link
             href="/dashboard/projects"
@@ -787,25 +795,25 @@ Please generate all files with complete, production-ready code.`;
             {activeDetailModule && (
               <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
                 {(() => {
-                  const module = adminModules.find(m => m.id === activeDetailModule);
-                  if (!module) return null;
-                  const colors = colorConfig[module.color];
-                  const isSelected = selectedModules.includes(module.id);
+                  const activeModule = adminModules.find(m => m.id === activeDetailModule);
+                  if (!activeModule) return null;
+                  const colors = colorConfig[activeModule.color];
+                  const isSelected = selectedModules.includes(activeModule.id);
 
                   return (
                     <>
-                      <div className={`px-5 py-4 border-b border-gray-100 bg-gradient-to-r ${module.gradient}`}>
+                      <div className={`px-5 py-4 border-b border-gray-100 bg-gradient-to-r ${activeModule.gradient}`}>
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center text-xl">
-                            {module.icon}
+                            {activeModule.icon}
                           </div>
                           <div className="flex-1">
-                            <h2 className="text-sm font-semibold text-white">{module.name}</h2>
-                            <p className="text-xs text-white/70">{module.description}</p>
+                            <h2 className="text-sm font-semibold text-white">{activeModule.name}</h2>
+                            <p className="text-xs text-white/70">{activeModule.description}</p>
                           </div>
                           {!isSelected && (
                             <button
-                              onClick={() => toggleModule(module.id)}
+                              onClick={() => toggleModule(activeModule.id)}
                               className="px-3 py-1.5 bg-white/20 hover:bg-white/30 rounded-lg text-xs font-medium text-white transition-colors"
                             >
                               Add Module
@@ -819,7 +827,7 @@ Please generate all files with complete, production-ready code.`;
                           Included Features
                         </h3>
                         <div className="grid grid-cols-2 gap-3">
-                          {module.features.map((feature) => (
+                          {activeModule.features.map((feature) => (
                             <div
                               key={feature.id}
                               className={`p-3 rounded-xl border ${isSelected ? `${colors.light} ${colors.border}` : 'bg-gray-50 border-gray-200'}`}

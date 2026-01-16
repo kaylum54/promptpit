@@ -16,15 +16,11 @@ export async function POST(request: NextRequest) {
     // Check if this is a callback from Auth0 with body data
     let userId: string | undefined;
     let email: string | undefined;
-    let name: string | undefined;
-    let picture: string | undefined;
 
     try {
       const body = await request.json();
       userId = body.userId;
       email = body.email;
-      name = body.name;
-      picture = body.picture;
     } catch {
       // No body, get from session
     }
@@ -40,12 +36,10 @@ export async function POST(request: NextRequest) {
       }
       userId = auth0User.sub;
       email = auth0User.email;
-      name = auth0User.name;
-      picture = auth0User.picture;
     }
 
     // Ensure profile exists
-    const profile = await ensureUserProfile(userId, email, name, picture);
+    const profile = await ensureUserProfile(userId, email);
 
     if (!profile) {
       return NextResponse.json(

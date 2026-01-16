@@ -418,7 +418,7 @@ function ReviewCard({ review }: { review: PRDReview }) {
         {review.summary && (
           <div className="pt-4 border-t border-gray-100">
             <p className="text-sm text-gray-600 italic">
-              "{review.summary}"
+              &quot;{review.summary}&quot;
             </p>
           </div>
         )}

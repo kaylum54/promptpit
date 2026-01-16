@@ -216,7 +216,7 @@ function IdeaPreview() {
             Idea Refinement
           </div>
           <div className="text-white font-medium">
-            Let's shape your concept into something buildable
+            Let&apos;s shape your concept into something buildable
           </div>
         </div>
       </div>
@@ -255,7 +255,7 @@ function IdeaPreview() {
             </div>
             <div className="bg-white/5 rounded-2xl rounded-tl-md px-4 py-3 flex-1">
               <p className="text-sm text-gray-300">
-                Interesting! So it's a <span className="text-white font-medium">habit tracker</span> with <span className="text-white font-medium">GitHub integration</span>. Is this for solo developers or teams?
+                Interesting! So it&apos;s a <span className="text-white font-medium">habit tracker</span> with <span className="text-white font-medium">GitHub integration</span>. Is this for solo developers or teams?
               </p>
             </div>
           </div>
@@ -452,7 +452,7 @@ function ArchitecturePreview() {
 
               {/* Reason */}
               <p className="text-xs text-gray-500 leading-relaxed">
-                "{model.reason}"
+                &quot;{model.reason}&quot;
               </p>
             </div>
           );

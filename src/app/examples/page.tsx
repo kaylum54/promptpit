@@ -236,7 +236,7 @@ export default function ExamplesPage() {
                   {/* Original Idea */}
                   <div className="bg-gray-50 rounded-xl p-4 mb-6 border border-gray-100">
                     <div className="text-xs text-gray-400 uppercase tracking-wider mb-2 font-medium">Original Idea</div>
-                    <p className="text-gray-700 italic">"{example.idea}"</p>
+                    <p className="text-gray-700 italic">&quot;{example.idea}&quot;</p>
                   </div>
 
                   {/* Quick Info */}

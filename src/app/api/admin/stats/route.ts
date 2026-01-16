@@ -12,7 +12,6 @@ export async function GET() {
   const supabase = createServiceRoleClient();
 
   // Date helpers
-  const now = new Date();
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
@@ -78,8 +77,8 @@ export async function GET() {
     .gte('updated_at', today.toISOString());
 
   const dauUserIds = new Set([
-    ...(dauDebates || []).map(d => d.user_id),
-    ...(dauPrds || []).map(p => p.user_id),
+    ...(dauDebates || []).map((d: { user_id: string }) => d.user_id),
+    ...(dauPrds || []).map((p: { user_id: string }) => p.user_id),
   ].filter(Boolean));
   const dau = dauUserIds.size;
 
@@ -96,8 +95,8 @@ export async function GET() {
     .gte('updated_at', weekAgo.toISOString());
 
   const wauUserIds = new Set([
-    ...(wauDebates || []).map(d => d.user_id),
-    ...(wauPrds || []).map(p => p.user_id),
+    ...(wauDebates || []).map((d: { user_id: string }) => d.user_id),
+    ...(wauPrds || []).map((p: { user_id: string }) => p.user_id),
   ].filter(Boolean));
   const wau = wauUserIds.size;
 
@@ -114,8 +113,8 @@ export async function GET() {
     .gte('updated_at', monthAgo.toISOString());
 
   const mauUserIds = new Set([
-    ...(mauDebates || []).map(d => d.user_id),
-    ...(mauPrds || []).map(p => p.user_id),
+    ...(mauDebates || []).map((d: { user_id: string }) => d.user_id),
+    ...(mauPrds || []).map((p: { user_id: string }) => p.user_id),
   ].filter(Boolean));
   const mau = mauUserIds.size;
 

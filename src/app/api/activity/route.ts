@@ -9,7 +9,6 @@ import { getAuth0User } from '@/lib/auth0';
 import { createServiceRoleClient } from '@/lib/supabase';
 
 type ActivityType = 'created' | 'updated' | 'status_changed' | 'commented' | 'exported' | 'shared' | 'archived' | 'debate' | 'chat';
-type EntityType = 'prd' | 'debate' | 'chat' | 'team';
 
 interface Activity {
   id: string;

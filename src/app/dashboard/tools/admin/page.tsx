@@ -30,7 +30,7 @@ export default function AdminBlueprintPage() {
           <h2 className="text-2xl font-bold text-gray-900 mb-2">Pro Feature</h2>
           <p className="text-gray-600 mb-6">
             Admin Blueprint is available on the Pro plan. Upgrade to generate complete admin panels
-            tailored to your project's tech stack.
+            tailored to your project&apos;s tech stack.
           </p>
           <a
             href="/pricing"
