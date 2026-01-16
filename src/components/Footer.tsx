@@ -1,50 +1,43 @@
 import Link from 'next/link';
-import Image from 'next/image';
 
 export default function Footer() {
   return (
-    <footer className="bg-bg-surface border-t border-border-subtle">
+    <footer className="border-t-2 border-gray-200 bg-white">
       {/* Main Footer Content */}
-      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 py-8 sm:py-12">
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 md:gap-12">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 py-12">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
           {/* Column 1: Brand */}
           <div className="space-y-4">
-            <Link href="/" className="flex items-center hover:opacity-80 transition-opacity">
-              <Image src="/logo.jpeg" alt="PromptPit" width={120} height={40} className="rounded-md" />
+            <Link href="/" className="flex items-center gap-2 group">
+              <div className="w-8 h-8 border-2 border-black flex items-center justify-center">
+                <span className="font-display text-sm">P</span>
+              </div>
+              <span className="font-display text-lg tracking-widest">PROMPTPIT</span>
             </Link>
-            <p className="text-text-secondary text-sm leading-relaxed max-w-xs">
-              The AI debate arena where language models compete head-to-head, judged by AI.
+            <p className="text-xs text-gray-500 font-mono leading-relaxed">
+              THE AI BATTLE ARENA WHERE LANGUAGE MODELS COMPETE HEAD-TO-HEAD.
             </p>
           </div>
 
-          {/* Column 2: Links */}
+          {/* Column 2: Arena */}
           <div className="space-y-4">
-            <h3 className="text-sm font-semibold text-text-primary uppercase tracking-wider">
-              Navigation
+            <h3 className="text-xs font-mono tracking-widest text-black">
+              {'// ARENA'}
             </h3>
-            <ul className="space-y-3">
+            <ul className="space-y-2">
               <li>
-                <Link
-                  href="/"
-                  className="text-text-secondary hover:text-text-primary text-sm transition-colors"
-                >
-                  Home
+                <Link href="/" className="text-xs font-mono text-gray-500 hover:text-black transition-colors">
+                  HOME
                 </Link>
               </li>
               <li>
-                <Link
-                  href="/pricing"
-                  className="text-text-secondary hover:text-text-primary text-sm transition-colors"
-                >
-                  Pricing
+                <Link href="/gallery" className="text-xs font-mono text-gray-500 hover:text-black transition-colors">
+                  GALLERY
                 </Link>
               </li>
               <li>
-                <Link
-                  href="/gallery"
-                  className="text-text-secondary hover:text-text-primary text-sm transition-colors"
-                >
-                  Gallery
+                <Link href="/pricing" className="text-xs font-mono text-gray-500 hover:text-black transition-colors">
+                  PRICING
                 </Link>
               </li>
             </ul>
@@ -52,37 +45,44 @@ export default function Footer() {
 
           {/* Column 3: Legal */}
           <div className="space-y-4">
-            <h3 className="text-sm font-semibold text-text-primary uppercase tracking-wider">
-              Legal
+            <h3 className="text-xs font-mono tracking-widest text-black">
+              {'// LEGAL'}
             </h3>
-            <ul className="space-y-3">
+            <ul className="space-y-2">
               <li>
-                <Link
-                  href="/terms"
-                  className="text-text-secondary hover:text-text-primary text-sm transition-colors"
-                >
-                  Terms of Service
+                <Link href="/terms" className="text-xs font-mono text-gray-500 hover:text-black transition-colors">
+                  TERMS
                 </Link>
               </li>
               <li>
-                <Link
-                  href="/privacy"
-                  className="text-text-secondary hover:text-text-primary text-sm transition-colors"
-                >
-                  Privacy Policy
+                <Link href="/privacy" className="text-xs font-mono text-gray-500 hover:text-black transition-colors">
+                  PRIVACY
                 </Link>
               </li>
             </ul>
+          </div>
+
+          {/* Column 4: Connect */}
+          <div className="space-y-4">
+            <h3 className="text-xs font-mono tracking-widest text-black">
+              {'// CONNECT'}
+            </h3>
+            <p className="text-xs font-mono text-gray-500">
+              POWERED BY OPENROUTER
+            </p>
           </div>
         </div>
       </div>
 
       {/* Bottom Bar */}
-      <div className="border-t border-border-subtle">
+      <div className="border-t border-gray-200">
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6 py-4">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4 text-sm text-text-muted text-center sm:text-left">
-            <p>&copy; 2025 PromptPit. All rights reserved.</p>
-            <p>Powered by OpenRouter</p>
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-xs font-mono text-gray-400">
+            <p>&copy; 2025 PROMPTPIT. ALL RIGHTS RESERVED.</p>
+            <p className="flex items-center gap-2">
+              <span className="w-2 h-2 bg-black animate-pulse" />
+              SYSTEMS ONLINE
+            </p>
           </div>
         </div>
       </div>

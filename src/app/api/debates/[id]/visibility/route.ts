@@ -1,7 +1,8 @@
 export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerSupabaseClient, createServiceRoleClient } from '@/lib/supabase';
+import { getAuth0User } from '@/lib/auth0';
+import { createServiceRoleClient } from '@/lib/supabase';
 
 /**
  * PUT /api/debates/[id]/visibility - Toggle debate public/private visibility
@@ -44,11 +45,10 @@ export async function PUT(
       );
     }
 
-    // Get authenticated user
-    const supabase = await createServerSupabaseClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    // Get authenticated user via Auth0
+    const auth0User = await getAuth0User();
 
-    if (authError || !user) {
+    if (!auth0User) {
       return NextResponse.json(
         { error: 'Authentication required' },
         { status: 401 }
@@ -87,7 +87,7 @@ export async function PUT(
     }
 
     // Verify user owns this debate
-    if (debate.user_id !== user.id) {
+    if (debate.user_id !== auth0User.sub) {
       return NextResponse.json(
         { error: 'You can only change visibility of your own debates' },
         { status: 403 }

@@ -1,5 +1,5 @@
-import { NextResponse } from 'next/server';
-import { createServerSupabaseClient } from '@/lib/supabase';
+import { NextRequest, NextResponse } from 'next/server';
+import { getAuth0User, ensureUserProfile } from '@/lib/auth0';
 import type { PromptPitProfile } from '@/lib/types';
 
 /**
@@ -7,74 +7,55 @@ import type { PromptPitProfile } from '@/lib/types';
  *
  * Creates a profile for the authenticated user if it doesn't exist.
  * Returns the user's profile data.
+ *
+ * Can also be called with userId, email, name, picture in body
+ * (used by Auth0 callback).
  */
-export async function POST() {
+export async function POST(request: NextRequest) {
   try {
-    const supabase = await createServerSupabaseClient();
+    // Check if this is a callback from Auth0 with body data
+    let userId: string | undefined;
+    let email: string | undefined;
+    let name: string | undefined;
+    let picture: string | undefined;
 
-    // Get current user
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      return NextResponse.json(
-        { error: 'Unauthorized - please sign in' },
-        { status: 401 }
-      );
+    try {
+      const body = await request.json();
+      userId = body.userId;
+      email = body.email;
+      name = body.name;
+      picture = body.picture;
+    } catch {
+      // No body, get from session
     }
 
-    // Check if profile already exists
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: existingProfile, error: fetchError } = await (supabase as any)
-      .from('promptpit_profiles')
-      .select('*')
-      .eq('id', user.id)
-      .single();
-
-    if (fetchError && fetchError.code !== 'PGRST116') {
-      // PGRST116 = no rows returned, which is expected if profile doesn't exist
-      console.error('Error fetching profile:', fetchError);
-      return NextResponse.json(
-        { error: 'Failed to fetch profile' },
-        { status: 500 }
-      );
+    // If no userId in body, get from Auth0 session
+    if (!userId) {
+      const auth0User = await getAuth0User();
+      if (!auth0User) {
+        return NextResponse.json(
+          { error: 'Unauthorized - please sign in' },
+          { status: 401 }
+        );
+      }
+      userId = auth0User.sub;
+      email = auth0User.email;
+      name = auth0User.name;
+      picture = auth0User.picture;
     }
 
-    // If profile exists, return it
-    if (existingProfile) {
-      return NextResponse.json({
-        profile: existingProfile as PromptPitProfile,
-        created: false,
-      });
-    }
+    // Ensure profile exists
+    const profile = await ensureUserProfile(userId, email, name, picture);
 
-    // Create new profile with default values
-    const now = new Date();
-    const monthResetDate = new Date(now.getFullYear(), now.getMonth() + 1, 1).toISOString();
-
-    const newProfile = {
-      id: user.id,
-      tier: 'free',
-      debates_this_month: 0,
-      month_reset_date: monthResetDate,
-    };
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: createdProfile, error: insertError } = await (supabase as any)
-      .from('promptpit_profiles')
-      .insert(newProfile)
-      .select('*')
-      .single();
-
-    if (insertError) {
-      console.error('Error creating profile:', insertError);
+    if (!profile) {
       return NextResponse.json(
-        { error: 'Failed to create profile' },
+        { error: 'Failed to create or fetch profile' },
         { status: 500 }
       );
     }
 
     return NextResponse.json({
-      profile: createdProfile as PromptPitProfile,
+      profile: profile as PromptPitProfile,
       created: true,
     }, { status: 201 });
 

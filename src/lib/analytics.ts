@@ -1,7 +1,5 @@
 'use client';
 
-import { createClient } from './supabase-browser';
-
 /**
  * Allowed analytics event names
  */
@@ -69,20 +67,6 @@ export function getGuestId(): string {
 }
 
 /**
- * Gets the current user ID from Supabase auth session.
- * Returns null if no user is authenticated.
- */
-async function getUserId(): Promise<string | null> {
-  try {
-    const supabase = createClient();
-    const { data: { session } } = await supabase.auth.getSession();
-    return session?.user?.id ?? null;
-  } catch {
-    return null;
-  }
-}
-
-/**
  * Tracks an analytics event by sending it to the analytics API endpoint.
  *
  * This function is designed to fail silently - it will never throw an error
@@ -109,14 +93,12 @@ export async function trackEvent(
   properties?: Record<string, unknown>
 ): Promise<void> {
   try {
-    const [userId, guestId] = await Promise.all([
-      getUserId(),
-      Promise.resolve(getGuestId()),
-    ]);
+    const guestId = getGuestId();
 
+    // User ID will be extracted from Auth0 session on the server side
     const payload: AnalyticsPayload = {
       event_name: eventName,
-      user_id: userId,
+      user_id: null, // Let the server extract this from Auth0 session
       guest_id: guestId,
       properties,
       page_url: typeof window !== 'undefined' ? window.location.href : '',

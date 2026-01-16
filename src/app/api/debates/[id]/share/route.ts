@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerSupabaseClient, createServiceRoleClient } from '@/lib/supabase';
+import { getAuth0User } from '@/lib/auth0';
+import { createServiceRoleClient } from '@/lib/supabase';
 import { nanoid } from 'nanoid';
 
 /**
@@ -12,11 +13,9 @@ export async function POST(
   const { id: debateId } = await params;
 
   try {
-    const supabase = await createServerSupabaseClient();
-
-    // Check authentication
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
+    // Check authentication via Auth0
+    const auth0User = await getAuth0User();
+    if (!auth0User) {
       return NextResponse.json(
         { error: 'Authentication required' },
         { status: 401 }
@@ -39,7 +38,7 @@ export async function POST(
       );
     }
 
-    if (debate.user_id !== user.id) {
+    if (debate.user_id !== auth0User.sub) {
       return NextResponse.json(
         { error: 'You can only share your own debates' },
         { status: 403 }
@@ -97,11 +96,9 @@ export async function DELETE(
   const { id: debateId } = await params;
 
   try {
-    const supabase = await createServerSupabaseClient();
-
-    // Check authentication
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
+    // Check authentication via Auth0
+    const auth0User = await getAuth0User();
+    if (!auth0User) {
       return NextResponse.json(
         { error: 'Authentication required' },
         { status: 401 }
@@ -124,7 +121,7 @@ export async function DELETE(
       );
     }
 
-    if (debate.user_id !== user.id) {
+    if (debate.user_id !== auth0User.sub) {
       return NextResponse.json(
         { error: 'You can only unshare your own debates' },
         { status: 403 }

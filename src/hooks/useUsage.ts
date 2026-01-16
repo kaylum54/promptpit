@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { createClient } from '@/lib/supabase-browser';
+import { useUser } from '@auth0/nextjs-auth0';
 
 export interface UsageData {
   tier: 'guest' | 'free' | 'pro';
@@ -26,6 +26,7 @@ export interface UseUsageReturn {
  * Auto-fetches on mount and when user changes.
  */
 export function useUsage(): UseUsageReturn {
+  const { user: auth0User, isLoading: auth0Loading } = useUser();
   const [usage, setUsage] = useState<UsageData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -63,30 +64,16 @@ export function useUsage(): UseUsageReturn {
     await fetchUsage();
   }, [fetchUsage]);
 
-  // Fetch on mount and listen for auth state changes
+  // Fetch on mount and when auth0User changes
   useEffect(() => {
-    const supabase = createClient();
-
-    // Initial fetch
-    fetchUsage();
-
-    // Listen for auth state changes to refetch usage when user changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      () => {
-        // Refetch usage data when auth state changes
-        fetchUsage();
-      }
-    );
-
-    // Cleanup subscription on unmount
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [fetchUsage]);
+    if (!auth0Loading) {
+      fetchUsage();
+    }
+  }, [auth0User, auth0Loading, fetchUsage]);
 
   return {
     usage,
-    isLoading,
+    isLoading: isLoading || auth0Loading,
     error,
     refresh,
   };

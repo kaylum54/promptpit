@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerSupabaseClient, createServiceRoleClient } from '@/lib/supabase';
+import { getAuth0User } from '@/lib/auth0';
+import { createServiceRoleClient } from '@/lib/supabase';
 import { MODELS, type ModelKey } from '@/lib/models';
 
 // Request body type for POST (event tracking)
@@ -92,24 +93,21 @@ export async function POST(request: NextRequest) {
  */
 export async function GET() {
   try {
-    const supabase = await createServerSupabaseClient();
-
-    // Check authentication
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
+    const auth0User = await getAuth0User();
+    if (!auth0User) {
       return NextResponse.json(
         { error: 'Authentication required' },
         { status: 401 }
       );
     }
 
-    const serviceClient = createServiceRoleClient();
+    const supabase = createServiceRoleClient();
 
     // Get all user's debates
-    const { data: debates, error: debatesError } = await serviceClient
+    const { data: debates, error: debatesError } = await supabase
       .from('debates')
       .select('id, verdict, created_at, is_public, share_id')
-      .eq('user_id', user.id)
+      .eq('user_id', auth0User.sub)
       .order('created_at', { ascending: true });
 
     if (debatesError) {
@@ -209,7 +207,7 @@ export async function GET() {
     let totalReactionsReceived = 0;
 
     if (debateIds.length > 0) {
-      const { data: reactions } = await serviceClient
+      const { data: reactions } = await supabase
         .from('debate_reactions')
         .select('reaction_type')
         .in('debate_id', debateIds);

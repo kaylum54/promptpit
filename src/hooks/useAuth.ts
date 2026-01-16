@@ -1,58 +1,48 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { User, Session } from '@supabase/supabase-js';
-import { createClient } from '@/lib/supabase-browser';
+import { useUser } from '@auth0/nextjs-auth0';
 import type { PromptPitProfile } from '@/lib/types';
 
+// Auth0 user type from the client SDK
+export interface Auth0ClientUser {
+  sub?: string;
+  email?: string;
+  email_verified?: boolean;
+  name?: string;
+  nickname?: string;
+  picture?: string;
+  updated_at?: string;
+}
+
 export interface UseAuthReturn {
-  user: User | null;
+  user: Auth0ClientUser | null;
   profile: PromptPitProfile | null;
   isLoading: boolean;
-  signIn: (email: string, password: string) => Promise<{ error?: string }>;
-  signUp: (email: string, password: string) => Promise<{ error?: string }>;
-  signOut: () => Promise<void>;
+  error?: Error;
+  signIn: (returnTo?: string) => void;
+  signUp: (returnTo?: string) => void;
+  signOut: () => void;
   refreshProfile: () => Promise<void>;
 }
 
 /**
- * React hook for managing Supabase authentication state.
- * Listens to auth state changes and provides sign in/up/out methods.
- * Also fetches and manages the user's PromptPit profile.
+ * React hook for managing Auth0 authentication state.
+ * Uses Auth0's useUser hook and fetches PromptPit profile from API.
  */
 export function useAuth(): UseAuthReturn {
-  const [user, setUser] = useState<User | null>(null);
+  const { user: auth0User, isLoading: auth0Loading, error } = useUser();
   const [profile, setProfile] = useState<PromptPitProfile | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [profileLoading, setProfileLoading] = useState(false);
 
   /**
-   * Fetch profile from promptpit_profiles table
-   * If profile doesn't exist, creates one via API
+   * Fetch profile from API
    */
-  const fetchProfile = useCallback(async (userId: string) => {
+  const fetchProfile = useCallback(async () => {
+    if (!auth0User?.sub) return;
+
+    setProfileLoading(true);
     try {
-      const supabase = createClient();
-
-      // Try to fetch existing profile
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data: existingProfile, error } = await (supabase as any)
-        .from('promptpit_profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
-
-      if (error && error.code !== 'PGRST116') {
-        // PGRST116 = no rows returned, which we handle below
-        console.error('Error fetching profile:', error);
-        return;
-      }
-
-      if (existingProfile) {
-        setProfile(existingProfile as PromptPitProfile);
-        return;
-      }
-
-      // Profile doesn't exist, create it via API
       const response = await fetch('/api/user/ensure-profile', {
         method: 'POST',
         headers: {
@@ -64,166 +54,69 @@ export function useAuth(): UseAuthReturn {
         const data = await response.json();
         setProfile(data.profile as PromptPitProfile);
       } else {
-        console.error('Error creating profile:', await response.text());
+        console.error('Error fetching profile:', await response.text());
       }
-    } catch (error) {
-      console.error('Error in fetchProfile:', error);
+    } catch (err) {
+      console.error('Error in fetchProfile:', err);
+    } finally {
+      setProfileLoading(false);
     }
-  }, []);
+  }, [auth0User?.sub]);
 
   /**
-   * Refresh the profile data from the database
+   * Refresh the profile data
    */
   const refreshProfile = useCallback(async () => {
-    if (user) {
-      await fetchProfile(user.id);
-    }
-  }, [user, fetchProfile]);
-
-  useEffect(() => {
-    const supabase = createClient();
-
-    // Timeout to prevent infinite loading (8 second max)
-    const timeout = setTimeout(() => {
-      console.warn('Auth loading timed out, setting to not loading');
-      setIsLoading(false);
-    }, 8000);
-
-    // Get initial session
-    const getInitialSession = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        const currentUser = session?.user ?? null;
-        setUser(currentUser);
-
-        // Set loading to false immediately after getting user
-        // Profile fetch happens in background
-        setIsLoading(false);
-        clearTimeout(timeout);
-
-        // Fetch profile if user is logged in (non-blocking)
-        if (currentUser) {
-          fetchProfile(currentUser.id).catch(err => {
-            console.error('Background profile fetch failed:', err);
-          });
-        }
-      } catch (error) {
-        console.error('Error getting initial session:', error);
-        setUser(null);
-        setProfile(null);
-        clearTimeout(timeout);
-        setIsLoading(false);
-      }
-    };
-
-    getInitialSession();
-
-    // Listen for auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event: string, session: Session | null) => {
-        const currentUser = session?.user ?? null;
-        setUser(currentUser);
-        setIsLoading(false);
-
-        if (currentUser) {
-          // Fetch profile in background (non-blocking)
-          fetchProfile(currentUser.id).catch(err => {
-            console.error('Profile fetch failed:', err);
-          });
-        } else {
-          // Clear profile when user signs out
-          setProfile(null);
-        }
-      }
-    );
-
-    // Cleanup subscription and timeout on unmount
-    return () => {
-      subscription.unsubscribe();
-      clearTimeout(timeout);
-    };
+    await fetchProfile();
   }, [fetchProfile]);
 
-  /**
-   * Sign in with email and password
-   */
-  const signIn = useCallback(async (email: string, password: string): Promise<{ error?: string }> => {
-    const supabase = createClient();
-
-    try {
-      // Add timeout to prevent infinite hanging
-      const timeoutPromise = new Promise<{ error: string }>((_, reject) =>
-        setTimeout(() => reject(new Error('Sign in timed out. Please try again.')), 15000)
-      );
-
-      const signInPromise = supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      const result = await Promise.race([signInPromise, timeoutPromise]);
-      const error = 'error' in result ? result.error : null;
-
-      if (error) {
-        return { error: typeof error === 'string' ? error : error.message };
-      }
-
-      return {};
-    } catch (err) {
-      return { error: err instanceof Error ? err.message : 'Sign in failed. Please try again.' };
+  // Fetch profile when user changes
+  useEffect(() => {
+    if (auth0User?.sub && !profile) {
+      fetchProfile();
+    } else if (!auth0User) {
+      setProfile(null);
     }
+  }, [auth0User, profile, fetchProfile]);
+
+  /**
+   * Redirect to Auth0 login page
+   * In v4, the login route is /auth/login (not /api/auth/login)
+   * Uses returnTo parameter to redirect to dashboard after login
+   */
+  const signIn = useCallback((returnTo: string = '/dashboard') => {
+    const params = new URLSearchParams();
+    params.set('returnTo', returnTo);
+    window.location.href = `/auth/login?${params.toString()}`;
   }, []);
 
   /**
-   * Sign up with email and password
+   * Redirect to Auth0 signup page
+   * In v4, use screen_hint=signup query param
+   * Uses returnTo parameter to redirect to login with verify=pending after signup
+   * This allows showing an email verification message
    */
-  const signUp = useCallback(async (email: string, password: string): Promise<{ error?: string }> => {
-    const supabase = createClient();
-
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-    });
-
-    if (error) {
-      return { error: error.message };
-    }
-
-    return {};
+  const signUp = useCallback((returnTo: string = '/login?verify=pending') => {
+    const params = new URLSearchParams();
+    params.set('screen_hint', 'signup');
+    params.set('returnTo', returnTo);
+    window.location.href = `/auth/login?${params.toString()}`;
   }, []);
 
   /**
-   * Sign out the current user
+   * Sign out and redirect to home
+   * In v4, the logout route is /auth/logout
    */
-  const signOut = useCallback(async (): Promise<void> => {
-    try {
-      const supabase = createClient();
-
-      // Clear local state immediately for responsive UI
-      setUser(null);
-      setProfile(null);
-
-      // Then sign out from Supabase (with timeout)
-      const timeoutPromise = new Promise<void>((_, reject) =>
-        setTimeout(() => reject(new Error('Sign out timed out')), 5000)
-      );
-
-      await Promise.race([
-        supabase.auth.signOut(),
-        timeoutPromise
-      ]);
-    } catch (err) {
-      console.error('Sign out error:', err);
-      // Still clear local state even if Supabase call fails
-      setUser(null);
-      setProfile(null);
-    }
+  const signOut = useCallback(() => {
+    setProfile(null);
+    window.location.href = '/auth/logout';
   }, []);
 
   return {
-    user,
+    user: auth0User as Auth0ClientUser | null,
     profile,
-    isLoading,
+    isLoading: auth0Loading || profileLoading,
+    error: error as Error | undefined,
     signIn,
     signUp,
     signOut,

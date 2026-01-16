@@ -8,39 +8,53 @@ interface AdminHeaderProps {
 
 export default function AdminHeader({ adminEmail }: AdminHeaderProps) {
   return (
-    <header className="sticky top-0 z-20 w-full bg-bg-surface/80 backdrop-blur-md border-b border-border-DEFAULT relative">
-      {/* Bottom glow line */}
-      <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-accent-primary/30 to-transparent" />
-
+    <header className="sticky top-0 z-20 w-full bg-white border-b border-gray-200">
       <div className="flex items-center justify-between h-14 px-4 md:px-6">
-        {/* Left side - Back link and title */}
+        {/* Left side - Spacer for mobile */}
         <div className="flex items-center gap-4">
           {/* Spacer for mobile hamburger menu */}
-          <div className="w-8 md:hidden" />
+          <div className="w-10 md:hidden" />
 
-          <Link
-            href="/"
-            className="flex items-center gap-2 text-text-secondary hover:text-accent-primary transition-all duration-200 text-body-small font-medium hover:translate-x-[-2px]"
-          >
-            <span className="font-mono">&larr;</span>
-            <span className="hidden sm:inline">Back to App</span>
-          </Link>
-
-          <div className="hidden sm:block h-5 w-px bg-border-DEFAULT" />
-
-          <h1 className="text-model-name text-text-primary font-bold">
+          <h1 className="text-base font-semibold text-gray-900">
             PromptPit Admin
           </h1>
         </div>
 
-        {/* Right side - Admin email */}
-        <div className="flex items-center gap-3">
+        {/* Right side - Admin info */}
+        <div className="flex items-center gap-4">
+          {/* Quick Actions */}
+          <Link
+            href="/dashboard"
+            className="hidden sm:flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            Exit Admin
+          </Link>
+
+          {/* Divider */}
+          <div className="hidden sm:block h-6 w-px bg-gray-200" />
+
+          {/* Admin User */}
           {adminEmail && (
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-success animate-pulse" />
-              <span className="text-body-small text-text-secondary truncate max-w-[150px] sm:max-w-[200px]">
-                {adminEmail}
-              </span>
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center">
+                  <span className="text-white text-xs font-bold">
+                    {adminEmail.charAt(0).toUpperCase()}
+                  </span>
+                </div>
+                <div className="hidden sm:block">
+                  <p className="text-sm font-medium text-gray-900 truncate max-w-[150px]">
+                    {adminEmail.split('@')[0]}
+                  </p>
+                  <div className="flex items-center gap-1">
+                    <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                    <span className="text-[10px] text-gray-500 uppercase tracking-wider font-medium">Admin</span>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
         </div>

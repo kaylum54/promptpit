@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerSupabaseClient, createServiceRoleClient, type Database } from '@/lib/supabase';
+import { getAuth0User } from '@/lib/auth0';
+import { createServiceRoleClient, type Database } from '@/lib/supabase';
 import type { ModelScores, JudgeVerdict, Debate, DebateArena } from '@/lib/types';
+import { updatePreferencesFromDebate } from '@/lib/preferences';
 
 // Round data for multi-round debates
 interface RoundData {
@@ -59,21 +61,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create Supabase client with session access
-    const supabase = await createServerSupabaseClient();
+    // Get current user (if logged in) via Auth0
+    const auth0User = await getAuth0User();
 
-    // Get current user (if logged in)
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-
-    if (authError) {
-      console.error('Auth error (non-fatal, treating as guest):', authError.message);
-    }
-
-    // Prepare debate data - user_id must be a valid UUID or null
-    // user.id from Supabase auth is already a UUID that matches auth.users.id
+    // Prepare debate data - user_id must be a valid string or null
+    // auth0User.sub is the Auth0 user ID
     // Cast complex objects through unknown to satisfy TypeScript's Json type
     const debateData: Database['public']['Tables']['debates']['Insert'] = {
-      user_id: user?.id ?? null,
+      user_id: auth0User?.sub ?? null,
       prompt: body.prompt,
       responses: body.responses as unknown as Database['public']['Tables']['debates']['Insert']['responses'],
       scores: body.scores as unknown as Database['public']['Tables']['debates']['Insert']['scores'],
@@ -112,6 +107,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Update user preferences from this debate (for Quick Mode routing)
+    if (auth0User?.sub && body.verdict?.winner) {
+      try {
+        await updatePreferencesFromDebate(auth0User.sub, {
+          prompt: body.prompt,
+          responses: body.responses,
+          verdict: body.verdict,
+        });
+      } catch (prefError) {
+        // Non-fatal: log but don't fail the request
+        console.error('Failed to update preferences:', prefError);
+      }
+    }
+
     const response: SaveDebateResponse = {
       id: data.id,
       created_at: data.created_at,
@@ -135,14 +144,11 @@ export async function POST(request: NextRequest) {
  */
 export async function GET() {
   try {
-    // Create Supabase client
-    const supabase = await createServerSupabaseClient();
+    // Get current user via Auth0
+    const auth0User = await getAuth0User();
 
-    // Get current user
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-
-    // If not logged in or auth error, return empty array
-    if (authError || !user) {
+    // If not logged in, return empty array
+    if (!auth0User) {
       const response: GetDebatesResponse = {
         debates: [],
         count: 0,
@@ -150,11 +156,14 @@ export async function GET() {
       return NextResponse.json(response);
     }
 
+    // Use service role client for DB operations
+    const supabase = createServiceRoleClient();
+
     // Query debates for this user, ordered by most recent first
     const { data: debates, error, count } = await supabase
       .from('debates')
       .select('*', { count: 'exact' })
-      .eq('user_id', user.id)
+      .eq('user_id', auth0User.sub)
       .order('created_at', { ascending: false })
       .limit(20);
 

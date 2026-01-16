@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerSupabaseClient, createServiceRoleClient } from '@/lib/supabase';
+import { getAuth0User } from '@/lib/auth0';
+import { createServiceRoleClient } from '@/lib/supabase';
 import { rateLimit, RATE_LIMITS, getRateLimitHeaders, createRateLimitResponse } from '@/lib/rate-limit';
 
 // Request body type for POST
@@ -48,23 +49,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create Supabase client with session access
-    const supabase = await createServerSupabaseClient();
-
     // Get current user (if logged in)
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-
-    if (authError) {
-      console.error('Auth error (non-fatal, treating as guest):', authError.message);
-    }
+    const auth0User = await getAuth0User();
 
     // Get user agent from request headers
     const userAgent = request.headers.get('user-agent') || null;
 
     // Prepare feedback data
     const feedbackData = {
-      user_id: user?.id ?? null,
-      email: body.email || user?.email || null,
+      user_id: auth0User?.sub ?? null,
+      email: body.email || auth0User?.email || null,
       category: body.category || null,
       message: body.message,
       page_url: body.page_url || null,
@@ -72,9 +66,9 @@ export async function POST(request: NextRequest) {
     };
 
     // Use service role client for inserts to bypass RLS
-    const adminClient = createServiceRoleClient();
+    const supabase = createServiceRoleClient();
 
-    const { data, error } = await adminClient
+    const { data, error } = await supabase
       .from('feedback')
       .insert(feedbackData)
       .select('id')

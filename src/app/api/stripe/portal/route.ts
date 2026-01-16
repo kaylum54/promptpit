@@ -1,24 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createPortalSession, getCustomerByEmail } from '@/lib/stripe';
-import { createServerSupabaseClient } from '@/lib/supabase';
+import { createPortalSession } from '@/lib/stripe';
+import { getAuth0User, getUserProfile } from '@/lib/auth0';
 
 export async function POST(request: NextRequest) {
   try {
-    // Get authenticated user
-    const supabase = await createServerSupabaseClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    // Get authenticated Auth0 user
+    const auth0User = await getAuth0User();
 
-    if (authError || !user || !user.email) {
+    if (!auth0User) {
       return NextResponse.json(
         { error: 'Authentication required' },
         { status: 401 }
       );
     }
 
-    // Get Stripe customer
-    const customer = await getCustomerByEmail(user.email);
+    // Get user profile with stripe_customer_id
+    const profile = await getUserProfile(auth0User.sub);
 
-    if (!customer) {
+    if (!profile?.stripe_customer_id) {
       return NextResponse.json(
         { error: 'No billing account found. Please subscribe first.' },
         { status: 404 }
@@ -30,8 +29,8 @@ export async function POST(request: NextRequest) {
 
     // Create portal session
     const session = await createPortalSession({
-      customerId: customer.id,
-      returnUrl: `${origin}/`,
+      customerId: profile.stripe_customer_id,
+      returnUrl: `${origin}/dashboard/settings`,
     });
 
     return NextResponse.json({ url: session.url });

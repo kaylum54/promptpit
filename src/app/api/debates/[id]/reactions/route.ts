@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerSupabaseClient, createServiceRoleClient } from '@/lib/supabase';
+import { getAuth0User } from '@/lib/auth0';
+import { createServiceRoleClient } from '@/lib/supabase';
 
 export type ReactionType = 'like' | 'fire' | 'think' | 'laugh';
 
@@ -25,11 +26,10 @@ export async function GET(
   const { id: debateId } = await params;
 
   try {
-    const supabase = await createServerSupabaseClient();
-    const serviceClient = createServiceRoleClient();
+    // Get current user (if logged in) via Auth0
+    const auth0User = await getAuth0User();
 
-    // Get current user (if logged in)
-    const { data: { user } } = await supabase.auth.getUser();
+    const serviceClient = createServiceRoleClient();
 
     // Get all reactions for this debate
     const { data: reactions, error } = await serviceClient
@@ -59,7 +59,7 @@ export async function GET(
       const type = reaction.reaction_type as ReactionType;
       counts[type]++;
 
-      if (user && reaction.user_id === user.id) {
+      if (auth0User && reaction.user_id === auth0User.sub) {
         userReactions.push(type);
       }
     }
@@ -89,11 +89,9 @@ export async function POST(
   const { id: debateId } = await params;
 
   try {
-    const supabase = await createServerSupabaseClient();
-
-    // Check authentication
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
+    // Check authentication via Auth0
+    const auth0User = await getAuth0User();
+    if (!auth0User) {
       return NextResponse.json(
         { error: 'Authentication required' },
         { status: 401 }
@@ -118,7 +116,7 @@ export async function POST(
       .from('debate_reactions')
       .upsert({
         debate_id: debateId,
-        user_id: user.id,
+        user_id: auth0User.sub,
         reaction_type,
       }, {
         onConflict: 'debate_id,user_id,reaction_type',
@@ -153,11 +151,9 @@ export async function DELETE(
   const { id: debateId } = await params;
 
   try {
-    const supabase = await createServerSupabaseClient();
-
-    // Check authentication
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
+    // Check authentication via Auth0
+    const auth0User = await getAuth0User();
+    if (!auth0User) {
       return NextResponse.json(
         { error: 'Authentication required' },
         { status: 401 }
@@ -182,7 +178,7 @@ export async function DELETE(
       .from('debate_reactions')
       .delete()
       .eq('debate_id', debateId)
-      .eq('user_id', user.id)
+      .eq('user_id', auth0User.sub)
       .eq('reaction_type', reaction_type);
 
     if (error) {

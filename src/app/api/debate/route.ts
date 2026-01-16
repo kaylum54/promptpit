@@ -9,7 +9,8 @@ import { streamChat, type Message } from '@/lib/openrouter';
 import { MODELS, type ModelKey } from '@/lib/models';
 import { ARENA_MODES, type ArenaMode } from '@/lib/modes';
 import type { DebateStreamEvent, PromptPitProfile } from '@/lib/types';
-import { createServerSupabaseClient, createServiceRoleClient } from '@/lib/supabase';
+import { getAuth0User } from '@/lib/auth0';
+import { createServiceRoleClient } from '@/lib/supabase';
 import { canStartDebate, getDebateLimit } from '@/lib/pricing';
 import { rateLimit, RATE_LIMITS, getRateLimitHeaders, createRateLimitResponse } from '@/lib/rate-limit';
 
@@ -270,38 +271,39 @@ export async function POST(request: NextRequest) {
     return createRateLimitResponse(rateLimitResult);
   }
 
-  // Get authenticated user (if any)
+  // Get authenticated user (if any) via Auth0
   let userId: string | null = null;
   let userProfile: PromptPitProfile | null = null;
 
   try {
-    const supabase = await createServerSupabaseClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const auth0User = await getAuth0User();
 
-    if (user) {
-      userId = user.id;
+    if (auth0User) {
+      userId = auth0User.sub;
+
+      // Use service role client for DB operations
+      const supabase = createServiceRoleClient();
 
       // Fetch user profile from promptpit_profiles
       const { data: profile, error: profileError } = await supabase
         .from('promptpit_profiles')
         .select('*')
-        .eq('id', user.id)
+        .eq('id', auth0User.sub)
         .single();
 
       if (profileError && profileError.code === 'PGRST116') {
         // Profile doesn't exist - create one
-        console.log('Creating new profile for user:', user.id);
-        const serviceClient = createServiceRoleClient();
+        console.log('Creating new profile for user:', auth0User.sub);
         const nextMonth = new Date();
         nextMonth.setMonth(nextMonth.getMonth() + 1);
         nextMonth.setDate(1);
         nextMonth.setHours(0, 0, 0, 0);
 
-        const { data: newProfile, error: createError } = await serviceClient
+        const { data: newProfile, error: createError } = await supabase
           .from('promptpit_profiles')
           .insert({
-            id: user.id,
-            email: user.email,
+            id: auth0User.sub,
+            email: auth0User.email,
             tier: 'free',
             debates_this_month: 0,
             month_reset_date: nextMonth.toISOString(),
@@ -325,17 +327,16 @@ export async function POST(request: NextRequest) {
         const { needsReset, debatesThisMonth } = checkMonthReset(userProfile);
 
         if (needsReset) {
-          // Reset the month counter using service role client
-          const serviceClient = createServiceRoleClient();
+          // Reset the month counter
           const newResetDate = getNextMonthResetDate();
 
-          await serviceClient
+          await supabase
             .from('promptpit_profiles')
             .update({
               debates_this_month: 0,
               month_reset_date: newResetDate
             })
-            .eq('id', user.id);
+            .eq('id', auth0User.sub);
 
           // Update local profile reference
           userProfile = {

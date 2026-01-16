@@ -36,16 +36,16 @@ interface AnalyticsData {
 // Skeleton loading component for table rows
 const TableRowSkeleton = () => (
   <tr className="animate-pulse">
-    <td className="px-4 py-3"><div className="h-4 bg-bg-subtle rounded w-24"></div></td>
-    <td className="px-4 py-3"><div className="h-4 bg-bg-subtle rounded w-16"></div></td>
+    <td className="px-4 py-3"><div className="h-4 bg-gray-100 rounded w-24"></div></td>
+    <td className="px-4 py-3"><div className="h-4 bg-gray-100 rounded w-16"></div></td>
   </tr>
 );
 
 const EventRowSkeleton = () => (
   <tr className="animate-pulse">
-    <td className="px-4 py-3"><div className="h-4 bg-bg-subtle rounded w-32"></div></td>
-    <td className="px-4 py-3"><div className="h-4 bg-bg-subtle rounded w-24"></div></td>
-    <td className="px-4 py-3"><div className="h-4 bg-bg-subtle rounded w-40"></div></td>
+    <td className="px-4 py-3"><div className="h-4 bg-gray-100 rounded w-32"></div></td>
+    <td className="px-4 py-3"><div className="h-4 bg-gray-100 rounded w-24"></div></td>
+    <td className="px-4 py-3"><div className="h-4 bg-gray-100 rounded w-40"></div></td>
   </tr>
 );
 
@@ -90,19 +90,19 @@ const formatChartDate = (dateString: string): string => {
 // Event type badge component
 const EventBadge = ({ eventName }: { eventName: string }) => {
   const colorMap: Record<string, string> = {
-    page_view: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
-    signup_started: 'bg-purple-500/10 text-purple-400 border-purple-500/20',
-    signup_completed: 'bg-green-500/10 text-green-400 border-green-500/20',
-    login: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20',
-    debate_started: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20',
-    debate_completed: 'bg-orange-500/10 text-orange-400 border-orange-500/20',
-    upgrade_clicked: 'bg-pink-500/10 text-pink-400 border-pink-500/20',
-    checkout_started: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20',
-    subscription_created: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
-    feedback_submitted: 'bg-teal-500/10 text-teal-400 border-teal-500/20',
+    page_view: 'bg-gray-100 text-gray-700 border-gray-300',
+    signup_started: 'bg-gray-50 text-gray-600 border-gray-200',
+    signup_completed: 'bg-gray-200 text-gray-800 border-gray-400',
+    login: 'bg-gray-100 text-gray-700 border-gray-300',
+    debate_started: 'bg-gray-50 text-gray-600 border-gray-200',
+    debate_completed: 'bg-gray-200 text-gray-800 border-gray-400',
+    upgrade_clicked: 'bg-black text-white border-black',
+    checkout_started: 'bg-gray-100 text-gray-700 border-gray-300',
+    subscription_created: 'bg-gray-200 text-gray-800 border-gray-400',
+    feedback_submitted: 'bg-gray-50 text-gray-600 border-gray-200',
   };
 
-  const style = colorMap[eventName] || 'bg-zinc-500/10 text-zinc-400 border-zinc-500/20';
+  const style = colorMap[eventName] || 'bg-gray-100 text-gray-600 border-gray-200';
 
   return (
     <span className={`px-2 py-1 text-xs font-medium rounded-full border ${style}`}>
@@ -165,13 +165,13 @@ export default function AdminAnalyticsPage() {
           <div className="flex items-center gap-3 mb-2">
             <Link
               href="/admin"
-              className="text-text-secondary hover:text-text-primary transition-colors"
+              className="text-gray-600 hover:text-black transition-colors"
             >
               <ArrowLeftIcon />
             </Link>
-            <h1 className="text-page-title text-text-primary">Event Analytics</h1>
+            <h1 className="text-page-title text-black">Event Analytics</h1>
           </div>
-          <p className="text-body text-text-secondary">
+          <p className="text-body text-gray-600">
             Track user events and platform activity
           </p>
         </div>
@@ -181,7 +181,7 @@ export default function AdminAnalyticsPage() {
           <select
             value={eventFilter}
             onChange={(e) => setEventFilter(e.target.value)}
-            className="bg-bg-base border border-border-subtle rounded-md px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-accent-primary cursor-pointer"
+            className="bg-white border border-gray-200 rounded-md px-3 py-2 text-sm text-black focus:outline-none focus:border-black cursor-pointer"
           >
             <option value="">All Events</option>
             {data?.uniqueEventTypes.map((type) => (
@@ -195,7 +195,7 @@ export default function AdminAnalyticsPage() {
           <select
             value={dateRange}
             onChange={(e) => setDateRange(e.target.value)}
-            className="bg-bg-base border border-border-subtle rounded-md px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-accent-primary cursor-pointer"
+            className="bg-white border border-gray-200 rounded-md px-3 py-2 text-sm text-black focus:outline-none focus:border-black cursor-pointer"
           >
             <option value="today">Today</option>
             <option value="7days">Last 7 Days</option>
@@ -206,7 +206,7 @@ export default function AdminAnalyticsPage() {
           <button
             onClick={() => fetchAnalytics()}
             disabled={loading}
-            className="flex items-center gap-2 px-3 py-2 bg-bg-surface border border-border-subtle rounded-md text-sm text-text-secondary hover:text-text-primary hover:border-border-strong transition-colors disabled:opacity-50"
+            className="flex items-center gap-2 px-3 py-2 bg-gray-50 border border-gray-200 rounded-md text-sm text-gray-600 hover:text-black hover:border-gray-300 transition-colors disabled:opacity-50"
           >
             <RefreshIcon />
             <span className="hidden sm:inline">Refresh</span>
@@ -216,14 +216,14 @@ export default function AdminAnalyticsPage() {
 
       {/* Error Banner */}
       {error && (
-        <div className="bg-error/10 border border-error/20 rounded-xl p-4 flex items-center gap-3">
-          <svg className="w-5 h-5 text-error flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="bg-gray-100 border border-gray-300 rounded-xl p-4 flex items-center gap-3">
+          <svg className="w-5 h-5 text-gray-700 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
-          <p className="text-error text-sm">{error}</p>
+          <p className="text-gray-700 text-sm">{error}</p>
           <button
             onClick={() => fetchAnalytics()}
-            className="ml-auto text-sm text-error hover:text-error/80 font-medium"
+            className="ml-auto text-sm text-gray-700 hover:text-gray-500 font-medium"
           >
             Retry
           </button>
@@ -232,31 +232,31 @@ export default function AdminAnalyticsPage() {
 
       {/* Message Banner (e.g., table not created) */}
       {data?.message && (
-        <div className="bg-accent-primary/10 border border-accent-primary/20 rounded-xl p-4 flex items-center gap-3">
-          <svg className="w-5 h-5 text-accent-primary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="bg-gray-100 border border-gray-300 rounded-xl p-4 flex items-center gap-3">
+          <svg className="w-5 h-5 text-black flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
-          <p className="text-accent-primary text-sm">{data.message}</p>
+          <p className="text-black text-sm">{data.message}</p>
         </div>
       )}
 
       {/* Stats Summary */}
       {!loading && data && !data.message && (
-        <div className="bg-bg-surface border border-border-DEFAULT rounded-xl p-4">
+        <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
           <div className="flex items-center gap-6 text-sm">
             <div className="flex items-center gap-2">
               <ChartIcon />
-              <span className="text-text-secondary">
-                Total Events: <span className="text-text-primary font-medium">{totalEvents.toLocaleString()}</span>
+              <span className="text-gray-600">
+                Total Events: <span className="text-black font-medium">{totalEvents.toLocaleString()}</span>
               </span>
             </div>
             {eventFilter && (
-              <div className="text-text-tertiary">
+              <div className="text-gray-500">
                 Filtered by: <EventBadge eventName={eventFilter} />
               </div>
             )}
-            <div className="text-text-tertiary">
-              Date range: <span className="text-text-secondary font-medium">
+            <div className="text-gray-500">
+              Date range: <span className="text-gray-600 font-medium">
                 {dateRange === 'today' ? 'Today' : dateRange === '7days' ? 'Last 7 days' : 'Last 30 days'}
               </span>
             </div>
@@ -267,18 +267,18 @@ export default function AdminAnalyticsPage() {
       {/* Two-column layout for counts and chart */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Event Counts Table */}
-        <div className="bg-bg-surface border border-border-DEFAULT rounded-xl overflow-hidden">
-          <div className="px-4 py-3 border-b border-border-subtle bg-bg-base/50">
-            <h2 className="text-sm font-medium text-text-primary">Event Counts by Type</h2>
+        <div className="bg-gray-50 border border-gray-200 rounded-xl overflow-hidden">
+          <div className="px-4 py-3 border-b border-gray-200 bg-gray-50">
+            <h2 className="text-sm font-medium text-black">Event Counts by Type</h2>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-bg-base/30">
-                <tr className="border-b border-border-subtle">
-                  <th className="px-4 py-3 text-left text-xs font-medium text-text-tertiary uppercase tracking-wider">
+              <thead className="bg-gray-50/50">
+                <tr className="border-b border-gray-200">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Event Name
                   </th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-text-tertiary uppercase tracking-wider">
+                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Count
                   </th>
                 </tr>
@@ -295,13 +295,13 @@ export default function AdminAnalyticsPage() {
                   <tr>
                     <td colSpan={2} className="px-4 py-10 text-center">
                       <div className="flex flex-col items-center justify-center">
-                        <div className="w-10 h-10 rounded-full bg-bg-elevated flex items-center justify-center mb-3">
-                          <svg className="w-5 h-5 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center mb-3">
+                          <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                           </svg>
                         </div>
-                        <p className="text-text-secondary font-medium mb-1">No events recorded</p>
-                        <p className="text-text-muted text-xs">Events will appear as users interact with the platform</p>
+                        <p className="text-gray-600 font-medium mb-1">No events recorded</p>
+                        <p className="text-gray-400 text-xs">Events will appear as users interact with the platform</p>
                       </div>
                     </td>
                   </tr>
@@ -309,14 +309,14 @@ export default function AdminAnalyticsPage() {
                   data?.eventCounts.map((event) => (
                     <tr
                       key={event.event_name}
-                      className="hover:bg-bg-base/50 transition-colors cursor-pointer"
+                      className="hover:bg-gray-50 transition-colors cursor-pointer"
                       onClick={() => setEventFilter(event.event_name)}
                     >
                       <td className="px-4 py-3">
                         <EventBadge eventName={event.event_name} />
                       </td>
                       <td className="px-4 py-3 text-right">
-                        <span className="text-text-primary font-medium">{event.count.toLocaleString()}</span>
+                        <span className="text-black font-medium">{event.count.toLocaleString()}</span>
                       </td>
                     </tr>
                   ))
@@ -327,24 +327,24 @@ export default function AdminAnalyticsPage() {
         </div>
 
         {/* Events Over Time Chart */}
-        <div className="bg-bg-surface border border-border-DEFAULT rounded-xl overflow-hidden">
-          <div className="px-4 py-3 border-b border-border-subtle bg-bg-base/50">
-            <h2 className="text-sm font-medium text-text-primary">Events Over Time</h2>
+        <div className="bg-gray-50 border border-gray-200 rounded-xl overflow-hidden">
+          <div className="px-4 py-3 border-b border-gray-200 bg-gray-50">
+            <h2 className="text-sm font-medium text-black">Events Over Time</h2>
           </div>
           <div className="p-4">
             {loading ? (
               <div className="h-48 flex items-center justify-center">
-                <div className="w-8 h-8 border-2 border-accent-primary border-t-transparent rounded-full animate-spin"></div>
+                <div className="w-8 h-8 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
               </div>
             ) : data?.eventsOverTime.length === 0 ? (
               <div className="h-48 flex flex-col items-center justify-center">
-                <div className="w-10 h-10 rounded-full bg-bg-elevated flex items-center justify-center mb-3">
-                  <svg className="w-5 h-5 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center mb-3">
+                  <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
                   </svg>
                 </div>
-                <p className="text-text-secondary font-medium mb-1 text-sm">No data available</p>
-                <p className="text-text-muted text-xs">Chart data will appear once events are recorded</p>
+                <p className="text-gray-600 font-medium mb-1 text-sm">No data available</p>
+                <p className="text-gray-400 text-xs">Chart data will appear once events are recorded</p>
               </div>
             ) : (
               <div className="h-48">
@@ -364,8 +364,8 @@ export default function AdminAnalyticsPage() {
                         <div
                           className={`w-full rounded-t transition-all ${
                             hasActivity
-                              ? 'bg-accent-primary hover:bg-accent-hover'
-                              : 'bg-bg-subtle hover:bg-bg-base'
+                              ? 'bg-black hover:bg-gray-800'
+                              : 'bg-gray-100 hover:bg-white'
                           }`}
                           style={{
                             height: hasActivity ? `${Math.max(heightPercent, 8)}%` : '4px',
@@ -373,7 +373,7 @@ export default function AdminAnalyticsPage() {
                           }}
                         />
                         {/* Tooltip */}
-                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-bg-elevated border border-border-subtle rounded text-xs text-text-primary opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10 shadow-lg">
+                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-100 border border-gray-200 rounded text-xs text-black opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10 shadow-lg">
                           {formatChartDate(point.date)}: {point.count} event{point.count !== 1 ? 's' : ''}
                         </div>
                       </div>
@@ -381,7 +381,7 @@ export default function AdminAnalyticsPage() {
                   })}
                 </div>
                 {/* X-axis labels */}
-                <div className="flex justify-between mt-2 text-xs text-text-muted">
+                <div className="flex justify-between mt-2 text-xs text-gray-400">
                   <span>{formatChartDate(data?.eventsOverTime[0]?.date || '')}</span>
                   <span>{formatChartDate(data?.eventsOverTime[data.eventsOverTime.length - 1]?.date || '')}</span>
                 </div>
@@ -392,21 +392,21 @@ export default function AdminAnalyticsPage() {
       </div>
 
       {/* Recent Events Table */}
-      <div className="bg-bg-surface border border-border-DEFAULT rounded-xl overflow-hidden">
-        <div className="px-4 py-3 border-b border-border-subtle bg-bg-base/50">
-          <h2 className="text-sm font-medium text-text-primary">Recent Events (Last 20)</h2>
+      <div className="bg-gray-50 border border-gray-200 rounded-xl overflow-hidden">
+        <div className="px-4 py-3 border-b border-gray-200 bg-gray-50">
+          <h2 className="text-sm font-medium text-black">Recent Events (Last 20)</h2>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-bg-base/30">
-              <tr className="border-b border-border-subtle">
-                <th className="px-4 py-3 text-left text-xs font-medium text-text-tertiary uppercase tracking-wider">
+            <thead className="bg-gray-50/50">
+              <tr className="border-b border-gray-200">
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Timestamp
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-text-tertiary uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Event
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-text-tertiary uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   User / Guest ID
                 </th>
               </tr>
@@ -424,11 +424,11 @@ export default function AdminAnalyticsPage() {
                 <tr>
                   <td colSpan={3} className="px-4 py-12 text-center">
                     <div className="flex flex-col items-center justify-center">
-                      <svg className="w-12 h-12 text-text-muted mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-12 h-12 text-gray-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                       </svg>
-                      <p className="text-text-muted text-sm">No events recorded yet</p>
-                      <p className="text-text-tertiary text-xs mt-1">
+                      <p className="text-gray-400 text-sm">No events recorded yet</p>
+                      <p className="text-gray-500 text-xs mt-1">
                         Events will appear here as users interact with the platform
                       </p>
                     </div>
@@ -438,10 +438,10 @@ export default function AdminAnalyticsPage() {
                 data?.recentEvents.map((event) => (
                   <tr
                     key={event.id}
-                    className="hover:bg-bg-base/50 transition-colors"
+                    className="hover:bg-gray-50 transition-colors"
                   >
                     <td className="px-4 py-3">
-                      <div className="text-sm text-text-primary" title={new Date(event.created_at).toLocaleString()}>
+                      <div className="text-sm text-black" title={new Date(event.created_at).toLocaleString()}>
                         {formatRelativeTime(event.created_at)}
                       </div>
                     </td>
@@ -451,17 +451,17 @@ export default function AdminAnalyticsPage() {
                     <td className="px-4 py-3">
                       {event.user_id ? (
                         <div className="flex flex-col">
-                          <span className="text-sm text-text-primary font-mono">
+                          <span className="text-sm text-black font-mono">
                             {event.user_id.slice(0, 8)}...
                           </span>
-                          <span className="text-xs text-text-muted">User</span>
+                          <span className="text-xs text-gray-400">User</span>
                         </div>
                       ) : (
                         <div className="flex flex-col">
-                          <span className="text-sm text-text-secondary font-mono">
+                          <span className="text-sm text-gray-600 font-mono">
                             {event.guest_id.slice(0, 8)}...
                           </span>
-                          <span className="text-xs text-text-muted">Guest</span>
+                          <span className="text-xs text-gray-400">Guest</span>
                         </div>
                       )}
                     </td>

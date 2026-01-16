@@ -131,6 +131,14 @@ export interface PromptPitProfile {
   debates_this_month: number;
   month_reset_date: string;
   created_at: string;
+  // User settings
+  display_name?: string;
+  timezone?: string;
+  language?: string;
+  notify_weekly_digest?: boolean;
+  notify_prd_complete?: boolean;
+  notify_team_updates?: boolean;
+  notify_marketing?: boolean;
 }
 
 // OpenRouter API types
@@ -166,4 +174,347 @@ export interface OpenRouterStreamChunk {
     };
     finish_reason?: string | null;
   }>;
+}
+
+// =============================================
+// Pro Dashboard: Chat Types
+// =============================================
+
+export type ChatRole = 'user' | 'assistant' | 'system';
+export type IntentCategory = 'writing' | 'code' | 'research' | 'analysis' | 'general';
+export type ChatModelKey = 'claude' | 'gpt' | 'gemini' | 'llama';
+
+// Chat session
+export interface Chat {
+  id: string;
+  user_id: string;
+  title: string;
+  last_message_at: string;
+  created_at: string;
+  archived: boolean;
+  message_count: number;
+  primary_category: IntentCategory;
+}
+
+// Individual message in a chat
+export interface ChatMessage {
+  id: string;
+  chat_id: string;
+  role: ChatRole;
+  content: string;
+  // AI routing info (assistant messages only)
+  model?: ChatModelKey;
+  category?: IntentCategory;
+  routing_reason?: string;
+  // Performance metadata
+  metadata?: ChatMessageMetadata;
+  created_at: string;
+}
+
+export interface ChatMessageMetadata {
+  latency_ms?: number;
+  tokens?: number;
+  cost_estimate?: string;
+  ttft_ms?: number;
+}
+
+// API request/response types
+export interface CreateChatRequest {
+  title?: string;
+}
+
+export interface SendMessageRequest {
+  chat_id: string;
+  content: string;
+  // Optional: force a specific model instead of auto-routing
+  force_model?: ChatModelKey;
+}
+
+export interface ChatStreamEvent {
+  type: 'routing' | 'chunk' | 'complete' | 'error';
+  model?: ChatModelKey;
+  category?: IntentCategory;
+  routing_reason?: string;
+  content?: string;
+  message_id?: string;
+  metadata?: ChatMessageMetadata;
+  error?: string;
+}
+
+// Chat list response
+export interface ChatListResponse {
+  chats: Chat[];
+  total: number;
+  hasMore: boolean;
+}
+
+// Chat with messages response
+export interface ChatWithMessages {
+  chat: Chat;
+  messages: ChatMessage[];
+}
+
+// =============================================
+// PRD Builder Types
+// =============================================
+
+export type PRDMode = 'quick' | 'full';
+export type PRDStatus = 'in_progress' | 'review' | 'completed' | 'archived';
+export type PRDDecisionType = 'framework' | 'database' | 'auth' | 'hosting' | 'caching' | 'scaling' | 'architecture' | 'other';
+export type PRDPlatform = 'web' | 'mobile' | 'desktop' | 'api' | 'extension';
+export type PRDMonetisation = 'free' | 'freemium' | 'paid' | 'usage_based' | 'enterprise';
+export type PRDPriority = 'must' | 'should' | 'could';
+export type PRDSeverity = 'high' | 'medium' | 'low';
+
+// PRD Idea Summary
+export interface PRDIdeaSummary {
+  problem: string;
+  target_user: string;
+  unique_value_prop: string;
+  platform: PRDPlatform;
+  monetisation: PRDMonetisation;
+  competitors?: { name: string; strengths: string; weaknesses: string }[];
+  differentiators?: string[];
+  risks?: { risk: string; mitigation: string }[];
+}
+
+// PRD Feature
+export interface PRDFeature {
+  name: string;
+  description: string;
+  user_story: string;
+  acceptance_criteria: string[];
+  priority: PRDPriority;
+}
+
+// PRD Features
+export interface PRDFeatures {
+  v1: PRDFeature[];
+  v2?: { name: string; description: string; rationale: string }[];
+  out_of_scope?: { name: string; reason: string }[];
+  user_flows?: { name: string; steps: string[] }[];
+}
+
+// PRD Tech Stack
+export interface PRDTechStack {
+  preset?: string;
+  frontend?: { framework: string; styling: string; state_management?: string; rationale?: string };
+  backend?: { framework: string; runtime: string; rationale?: string };
+  database?: { type: string; provider: string; orm?: string; rationale?: string };
+  auth?: { provider: string; methods?: string[]; rationale?: string };
+  hosting?: { provider: string; type: string; rationale?: string };
+  additional?: { name: string; purpose: string }[];
+}
+
+// PRD Security
+export interface PRDSecurity {
+  authentication?: {
+    flow: string;
+    session_handling: string;
+    token_strategy?: string;
+  };
+  authorization?: {
+    model: 'rbac' | 'abac' | 'simple';
+    roles?: { name: string; permissions: string[] }[];
+  };
+  input_validation?: { strategy: string; libraries?: string[] };
+  rate_limiting?: { strategy: string; limits?: Record<string, unknown> };
+  secrets_management?: { strategy: string; provider?: string };
+  cors?: { strategy: string; allowed_origins?: string[] };
+  security_headers?: string[];
+}
+
+// PRD Cost Estimate
+export interface PRDCostEstimate {
+  build_costs?: {
+    estimated_hours: number;
+    hourly_rate_suggestion: number;
+    total_estimate: number;
+    breakdown?: { phase: string; hours: number; description: string }[];
+  };
+  subscription_costs?: {
+    service: string;
+    tier: string;
+    monthly_cost: number;
+    annual_cost?: number;
+    purpose: string;
+    free_tier_limits?: string;
+    when_to_upgrade?: string;
+  }[];
+  operational_costs?: {
+    mvp?: { users: string; monthly_cost: number; breakdown?: Record<string, unknown> };
+    growth?: { users: string; monthly_cost: number; breakdown?: Record<string, unknown> };
+    scale?: { users: string; monthly_cost: number; breakdown?: Record<string, unknown> };
+  };
+  total_monthly?: { mvp: number; growth: number; scale: number };
+  cost_optimisation_tips?: string[];
+}
+
+// Main PRD object
+export interface PRD {
+  id: string;
+  user_id: string;
+  title?: string;
+  mode: PRDMode;
+  status: PRDStatus;
+  current_phase: number;
+  template_id?: string;
+
+  // Phase data
+  idea_summary?: PRDIdeaSummary;
+  features?: PRDFeatures;
+  tech_stack?: PRDTechStack;
+  database_schema?: string;
+  api_structure?: Record<string, unknown>;
+  file_structure?: string;
+  security?: PRDSecurity;
+  error_handling?: Record<string, unknown>;
+  performance?: Record<string, unknown>;
+  scaling?: Record<string, unknown>;
+  observability?: Record<string, unknown>;
+  deployment?: Record<string, unknown>;
+  cost_estimate?: PRDCostEstimate;
+
+  // Outputs
+  prd_markdown?: string;
+  claude_code_prompt?: string;
+
+  // Collaboration
+  is_public: boolean;
+  share_token?: string;
+  collaborators?: { user_id: string; email?: string; role: 'viewer' | 'commenter' | 'editor'; added_at: string }[];
+
+  // Versioning
+  version: number;
+  parent_prd_id?: string;
+
+  created_at: string;
+  updated_at: string;
+}
+
+// PRD Message
+export interface PRDMessage {
+  id: string;
+  prd_id: string;
+  user_id: string;
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+  phase?: number;
+  message_type: 'chat' | 'debate_intro' | 'debate_result' | 'review';
+  metadata?: Record<string, unknown>;
+  created_at: string;
+}
+
+// PRD Debate Response
+export interface PRDDebateResponse {
+  model: ChatModelKey;
+  recommendation: string;
+  reasoning: string;
+  pros: string[];
+  cons: string[];
+}
+
+// PRD Debate
+export interface PRDDebate {
+  id: string;
+  prd_id: string;
+  decision_type: PRDDecisionType;
+  decision_label: string;
+  context: Record<string, unknown>;
+  responses: PRDDebateResponse[];
+  verdict?: {
+    winner: string;
+    vote_count?: Record<string, string>;
+    reasoning?: string;
+  };
+  user_choice?: string;
+  user_rationale?: string;
+  phase: number;
+  created_at: string;
+}
+
+// PRD Review Concern
+export interface PRDReviewConcern {
+  severity: PRDSeverity;
+  section: string;
+  issue: string;
+  suggestion: string;
+  addressed?: boolean;
+  addressed_at?: string;
+}
+
+// PRD Review
+export interface PRDReview {
+  id: string;
+  prd_id: string;
+  model: string;
+  strengths: string[];
+  concerns: PRDReviewConcern[];
+  overall_score: number;
+  summary?: string;
+  created_at: string;
+}
+
+// PRD Comment
+export interface PRDComment {
+  id: string;
+  prd_id: string;
+  user_id: string;
+  parent_comment_id?: string;
+  content: string;
+  section?: string;
+  resolved: boolean;
+  resolved_by?: string;
+  resolved_at?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+// PRD Version
+export interface PRDVersion {
+  id: string;
+  prd_id: string;
+  version: number;
+  snapshot: PRD;
+  change_summary?: string;
+  changes?: { section: string; change_type: 'added' | 'modified' | 'removed'; description: string }[];
+  created_by?: string;
+  created_at: string;
+}
+
+// API Request/Response types
+export interface CreatePRDRequest {
+  mode: PRDMode;
+  template_id?: string;
+  initial_idea?: string;
+}
+
+export interface PRDListResponse {
+  prds: PRD[];
+  total: number;
+}
+
+export interface SendPRDMessageRequest {
+  content: string;
+}
+
+export interface PRDMessageStreamEvent {
+  type: 'chunk' | 'complete' | 'debate_trigger' | 'review_trigger' | 'phase_complete' | 'error';
+  content?: string;
+  message_id?: string;
+  debate_info?: { decision_type: PRDDecisionType; label: string; context: Record<string, unknown> };
+  phase?: number;
+  error?: string;
+}
+
+export interface TriggerDebateRequest {
+  decision_type: PRDDecisionType;
+  decision_label: string;
+  context: Record<string, unknown>;
+}
+
+export interface SubmitDebateChoiceRequest {
+  debate_id: string;
+  choice: string;
+  rationale?: string;
 }

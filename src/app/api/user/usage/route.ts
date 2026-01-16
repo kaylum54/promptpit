@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { createServerSupabaseClient, createServiceRoleClient } from '@/lib/supabase';
+import { getAuth0User, getUserProfile } from '@/lib/auth0';
+import { createServiceRoleClient } from '@/lib/supabase';
 import { getDebateLimit, canStartDebate, getDebatesRemaining } from '@/lib/pricing';
 import type { PromptPitProfile } from '@/lib/types';
 
@@ -14,6 +15,9 @@ interface UsageResponse {
   canStartDebate: boolean;
   monthResetDate: string;
   isGuest: boolean;
+  email?: string;
+  displayName?: string;
+  role?: string;
 }
 
 /**
@@ -25,13 +29,11 @@ interface UsageResponse {
  */
 export async function GET() {
   try {
-    const supabase = await createServerSupabaseClient();
-
-    // Get current user
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    // Get current Auth0 user
+    const auth0User = await getAuth0User();
 
     // If no user (guest), return guest tier with 1 debate limit
-    if (authError || !user) {
+    if (!auth0User) {
       const nextMonth = new Date();
       nextMonth.setMonth(nextMonth.getMonth() + 1);
       nextMonth.setDate(1);
@@ -50,21 +52,8 @@ export async function GET() {
       return NextResponse.json(guestResponse);
     }
 
-    // Fetch user's profile
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: profile, error: fetchError } = await (supabase as any)
-      .from('promptpit_profiles')
-      .select('*')
-      .eq('id', user.id)
-      .single();
-
-    if (fetchError && fetchError.code !== 'PGRST116') {
-      console.error('Error fetching profile:', fetchError);
-      return NextResponse.json(
-        { error: 'Failed to fetch profile' },
-        { status: 500 }
-      );
-    }
+    // Fetch user's profile from Supabase
+    const profile = await getUserProfile(auth0User.sub);
 
     // If no profile exists, return defaults (profile should be created via ensure-profile)
     if (!profile) {
@@ -81,6 +70,7 @@ export async function GET() {
         canStartDebate: canStartDebate(0, 'free'),
         monthResetDate: nextMonth.toISOString(),
         isGuest: false,
+        email: auth0User.email,
       };
 
       return NextResponse.json(newUserResponse);
@@ -108,6 +98,9 @@ export async function GET() {
         canStartDebate: true,
         monthResetDate: nextMonth.toISOString(),
         isGuest: false,
+        email: auth0User.email,
+        displayName: userProfile.display_name || undefined,
+        role: 'admin',
       };
 
       return NextResponse.json(adminResponse);
@@ -134,7 +127,7 @@ export async function GET() {
           debates_this_month: 0,
           month_reset_date: monthResetDate,
         })
-        .eq('id', user.id);
+        .eq('id', auth0User.sub);
 
       if (updateError) {
         console.error('Error resetting monthly usage:', updateError);
@@ -151,6 +144,9 @@ export async function GET() {
       canStartDebate: canStartDebate(debatesThisMonth, tier),
       monthResetDate,
       isGuest: false,
+      email: auth0User.email,
+      displayName: userProfile.display_name || undefined,
+      role: userProfile.role || undefined,
     };
 
     return NextResponse.json(response);

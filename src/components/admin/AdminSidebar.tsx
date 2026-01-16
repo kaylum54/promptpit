@@ -11,14 +11,66 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { label: 'Dashboard', href: '/admin', icon: '[ ]' },
-  { label: 'Users', href: '/admin/users', icon: '[U]' },
-  { label: 'Debates', href: '/admin/debates', icon: '[D]' },
-  { label: 'Revenue', href: '/admin/revenue', icon: '[$]' },
-  { label: 'Analytics', href: '/admin/analytics', icon: '[A]' },
-  { label: 'Feedback', href: '/admin/feedback', icon: '[F]' },
-  { label: 'Settings', href: '/admin/settings', icon: '[S]' },
+  { label: 'Dashboard', href: '/admin', icon: 'dashboard' },
+  { label: 'Users', href: '/admin/users', icon: 'users' },
+  { label: 'Debates', href: '/admin/debates', icon: 'chat' },
+  { label: 'Revenue', href: '/admin/revenue', icon: 'dollar' },
+  { label: 'Analytics', href: '/admin/analytics', icon: 'chart' },
+  { label: 'Feedback', href: '/admin/feedback', icon: 'feedback' },
+  { label: 'Settings', href: '/admin/settings', icon: 'settings' },
 ];
+
+function NavIcon({ name, active }: { name: string; active: boolean }) {
+  const className = `w-4 h-4 ${active ? 'text-gray-900' : 'text-gray-500'}`;
+
+  switch (name) {
+    case 'dashboard':
+      return (
+        <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
+        </svg>
+      );
+    case 'users':
+      return (
+        <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+        </svg>
+      );
+    case 'chat':
+      return (
+        <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+        </svg>
+      );
+    case 'dollar':
+      return (
+        <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      );
+    case 'chart':
+      return (
+        <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+        </svg>
+      );
+    case 'feedback':
+      return (
+        <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+        </svg>
+      );
+    case 'settings':
+      return (
+        <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+      );
+    default:
+      return null;
+  }
+}
 
 export default function AdminSidebar() {
   const pathname = usePathname();
@@ -44,74 +96,103 @@ export default function AdminSidebar() {
       {/* Mobile toggle button */}
       <button
         onClick={() => setIsCollapsed(!isCollapsed)}
-        className="fixed top-4 left-4 z-50 md:hidden p-2 rounded-md bg-bg-surface border border-border-DEFAULT text-text-secondary hover:text-text-primary hover:border-border-strong"
+        className="fixed top-4 left-4 z-50 md:hidden p-2 rounded-lg bg-white border border-gray-200 text-gray-600 hover:text-gray-900 hover:bg-gray-50 shadow-sm"
         aria-label={isCollapsed ? 'Open sidebar' : 'Close sidebar'}
       >
         {isCollapsed ? (
-          <span className="text-lg">=</span>
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
         ) : (
-          <span className="text-lg">X</span>
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
         )}
       </button>
 
       {/* Sidebar */}
       <aside
         className={`
-          fixed top-0 left-0 z-40 h-full w-[220px]
-          bg-gradient-to-b from-bg-surface to-bg-base
-          border-r border-border-DEFAULT
+          fixed top-0 left-0 z-40 h-full w-64
+          bg-[#F8F8F8]
+          border-r border-gray-200
           transform transition-transform duration-200 ease-in-out
           ${isCollapsed ? '-translate-x-full' : 'translate-x-0'}
           md:translate-x-0 md:static md:z-0
-          relative
+          flex flex-col
         `}
       >
-        {/* Right border glow effect */}
-        <div className="absolute top-0 right-0 w-px h-full bg-gradient-to-b from-accent-primary/20 via-accent-primary/10 to-transparent" />
-
-        <div className="flex flex-col h-full">
-          {/* Logo/Brand */}
-          <div className="p-4 border-b border-border-DEFAULT">
-            <Link
-              href="/admin"
-              className="text-lg font-bold text-text-primary hover:text-accent-primary transition-colors"
-            >
-              Admin Panel
-            </Link>
-          </div>
-
-          {/* Navigation */}
-          <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
-            {navItems.map((item) => {
-              const active = isActive(item.href);
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => setIsCollapsed(true)}
-                  className={`
-                    flex items-center gap-3 px-3 py-2.5 rounded-md
-                    font-medium text-body-small
-                    transition-all duration-200 ease-out
-                    ${active
-                      ? 'bg-accent-primary/10 text-accent-primary border-l-2 border-l-accent-primary border-y border-r border-y-accent-primary/20 border-r-accent-primary/20 shadow-[inset_0_0_12px_rgba(59,130,246,0.1)]'
-                      : 'text-text-secondary hover:text-text-primary hover:bg-bg-elevated border-l-2 border-l-transparent border-y border-r border-transparent hover:border-l-border-strong'
-                    }
-                  `}
-                >
-                  <span className={`font-mono text-xs transition-opacity duration-200 ${active ? 'opacity-100' : 'opacity-60 group-hover:opacity-80'}`}>{item.icon}</span>
-                  <span>{item.label}</span>
-                </Link>
-              );
-            })}
-          </nav>
-
-          {/* Bottom section */}
-          <div className="p-4 border-t border-border-DEFAULT">
-            <div className="text-caption text-text-tertiary">
-              v1.0.0
+        {/* Header */}
+        <div className="h-14 px-4 flex items-center justify-between border-b border-gray-200/50">
+          <Link href="/admin" className="flex items-center gap-2.5">
+            <div className="w-7 h-7 bg-black rounded-lg flex items-center justify-center">
+              <span className="text-white text-xs font-bold">A</span>
             </div>
+            <span className="font-semibold text-gray-900 text-[15px]">Admin Panel</span>
+          </Link>
+        </div>
+
+        {/* Back to App Button */}
+        <div className="p-3">
+          <Link
+            href="/dashboard"
+            className="
+              w-full flex items-center justify-center gap-2
+              bg-black text-white
+              px-4 py-2.5 rounded-lg
+              font-medium text-sm
+              hover:bg-gray-800
+              transition-all duration-200
+              shadow-sm
+            "
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            Back to Dashboard
+          </Link>
+        </div>
+
+        {/* Navigation */}
+        <nav className="flex-1 px-3 py-2 space-y-0.5 overflow-y-auto">
+          {navItems.map((item) => {
+            const active = isActive(item.href);
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={() => setIsCollapsed(true)}
+                className={`
+                  flex items-center gap-3 px-3 py-2 rounded-lg
+                  text-[13px] font-medium
+                  transition-all duration-150
+                  ${active
+                    ? 'bg-white text-gray-900 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100/50'
+                  }
+                `}
+              >
+                <NavIcon name={item.icon} active={active} />
+                {item.label}
+              </Link>
+            );
+          })}
+        </nav>
+
+        {/* Admin Badge */}
+        <div className="p-3 border-t border-gray-200/50">
+          <div className="px-3 py-2 bg-gray-100 rounded-lg">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+              <span className="text-xs font-medium text-gray-600">Admin Mode</span>
+            </div>
+            <p className="text-[10px] text-gray-400 mt-1">Full access enabled</p>
           </div>
+        </div>
+
+        {/* Version */}
+        <div className="px-6 py-3 border-t border-gray-200/50">
+          <p className="text-[10px] text-gray-400">Version 1.0.0</p>
         </div>
       </aside>
     </>

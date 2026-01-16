@@ -1,0 +1,11 @@
+export { Navigation } from './Navigation';
+export { HeroSection } from './HeroSection';
+export { HowItWorksSection } from './HowItWorksSection';
+export { WhatYouGetSection } from './WhatYouGetSection';
+export { FeaturesSection } from './FeaturesSection';
+export { ProcessSection } from './ProcessSection';
+export { ProFeaturesSection } from './ProFeaturesSection';
+export { PricingSection } from './PricingSection';
+export { FinalCTASection } from './FinalCTASection';
+export { Footer } from './Footer';
+export { UpgradePrompt } from './UpgradePrompt';

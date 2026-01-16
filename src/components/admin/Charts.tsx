@@ -13,19 +13,19 @@ import {
 } from 'recharts';
 import { useMemo } from 'react';
 
-// Design system colors from tailwind config
+// Light theme colors matching the dashboard
 const colors = {
-  accent: '#3b82f6',
-  success: '#22c55e',
-  bgBase: '#09090b',
-  bgSurface: '#0f0f12',
-  bgElevated: '#18181b',
-  border: '#27272a',
-  borderSubtle: '#1f1f23',
-  textPrimary: '#fafafa',
-  textSecondary: '#a1a1aa',
-  textTertiary: '#71717a',
-  textMuted: '#52525b',
+  accent: '#111827', // gray-900
+  success: '#16a34a', // green-600
+  bgBase: '#fafafa',
+  bgSurface: '#ffffff',
+  bgElevated: '#f9fafb',
+  border: '#e5e7eb', // gray-200
+  borderSubtle: '#f3f4f6', // gray-100
+  textPrimary: '#111827', // gray-900
+  textSecondary: '#4b5563', // gray-600
+  textTertiary: '#6b7280', // gray-500
+  textMuted: '#9ca3af', // gray-400
 };
 
 // Types for chart data
@@ -60,9 +60,9 @@ const CustomTooltip = ({
 }) => {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-bg-elevated border border-border-DEFAULT rounded-lg px-3 py-2 shadow-md">
-        <p className="text-text-secondary text-xs mb-1">{label}</p>
-        <p className="text-text-primary text-sm font-semibold">
+      <div className="bg-white border border-gray-200 rounded-lg px-3 py-2 shadow-lg">
+        <p className="text-gray-500 text-xs mb-1">{label}</p>
+        <p className="text-gray-900 text-sm font-semibold">
           {payload[0].value} {valueLabel}
         </p>
       </div>
@@ -73,10 +73,10 @@ const CustomTooltip = ({
 
 // Chart skeleton component for loading state
 export const ChartSkeleton = () => (
-  <div className="h-64 flex flex-col items-center justify-center border border-dashed border-border-subtle rounded-lg bg-bg-base/50 animate-pulse">
-    <div className="w-12 h-12 bg-bg-subtle rounded mb-3"></div>
-    <div className="h-4 bg-bg-subtle rounded w-32 mb-2"></div>
-    <div className="h-3 bg-bg-subtle rounded w-24"></div>
+  <div className="h-64 flex flex-col items-center justify-center border border-dashed border-gray-200 rounded-lg bg-gray-50 animate-pulse">
+    <div className="w-12 h-12 bg-gray-200 rounded mb-3"></div>
+    <div className="h-4 bg-gray-200 rounded w-32 mb-2"></div>
+    <div className="h-3 bg-gray-200 rounded w-24"></div>
   </div>
 );
 
@@ -144,9 +144,9 @@ function processDebatesPerDayData(data: DebatesPerDayDataPoint[] | undefined) {
 
 // Empty state component
 const EmptyState = ({ message }: { message: string }) => (
-  <div className="h-64 flex flex-col items-center justify-center border border-dashed border-border-subtle rounded-lg bg-bg-base/50">
+  <div className="h-64 flex flex-col items-center justify-center border border-dashed border-gray-200 rounded-lg bg-gray-50">
     <svg
-      className="w-12 h-12 text-text-muted mb-3"
+      className="w-12 h-12 text-gray-300 mb-3"
       fill="none"
       stroke="currentColor"
       viewBox="0 0 24 24"
@@ -158,7 +158,7 @@ const EmptyState = ({ message }: { message: string }) => (
         d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
       />
     </svg>
-    <p className="text-text-muted text-sm">{message}</p>
+    <p className="text-gray-400 text-sm">{message}</p>
   </div>
 );
 
@@ -213,7 +213,7 @@ export function UserGrowthChart({ data }: UserGrowthChartProps) {
             activeDot={{
               r: 6,
               fill: colors.accent,
-              stroke: colors.bgElevated,
+              stroke: colors.bgSurface,
               strokeWidth: 2,
             }}
           />

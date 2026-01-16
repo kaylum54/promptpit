@@ -1,14 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createCheckoutSession, type PlanId } from '@/lib/stripe';
-import { createServerSupabaseClient } from '@/lib/supabase';
+import { getAuth0User } from '@/lib/auth0';
 
 export async function POST(request: NextRequest) {
   try {
-    // Get authenticated user
-    const supabase = await createServerSupabaseClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    // Get authenticated Auth0 user
+    const auth0User = await getAuth0User();
 
-    if (authError || !user) {
+    if (!auth0User) {
       return NextResponse.json(
         { error: 'Authentication required' },
         { status: 401 }
@@ -31,8 +30,8 @@ export async function POST(request: NextRequest) {
 
     // Create checkout session
     const session = await createCheckoutSession({
-      userId: user.id,
-      userEmail: user.email!,
+      userId: auth0User.sub,
+      userEmail: auth0User.email!,
       planId: planId as PlanId,
       successUrl: `${origin}/?checkout=success`,
       cancelUrl: `${origin}/?checkout=cancelled`,
