@@ -16,12 +16,21 @@ export async function middleware(request: NextRequest) {
       return await auth0.middleware(request);
     } catch (error) {
       console.error('Auth0 middleware error:', error);
+      // Debug: Check which env vars are set (don't expose values)
+      const envCheck = {
+        AUTH0_SECRET: !!process.env.AUTH0_SECRET ? `set (${process.env.AUTH0_SECRET?.length} chars)` : 'MISSING',
+        AUTH0_BASE_URL: process.env.AUTH0_BASE_URL || 'MISSING',
+        AUTH0_ISSUER_BASE_URL: process.env.AUTH0_ISSUER_BASE_URL || 'MISSING',
+        AUTH0_CLIENT_ID: !!process.env.AUTH0_CLIENT_ID ? `set (${process.env.AUTH0_CLIENT_ID?.length} chars)` : 'MISSING',
+        AUTH0_CLIENT_SECRET: !!process.env.AUTH0_CLIENT_SECRET ? `set (${process.env.AUTH0_CLIENT_SECRET?.length} chars)` : 'MISSING',
+      };
       // Return a more helpful error page
       return new NextResponse(
         JSON.stringify({
           error: 'Authentication error',
           message: error instanceof Error ? error.message : 'Unknown error',
-          hint: 'Check AUTH0_SECRET, AUTH0_BASE_URL, AUTH0_ISSUER_BASE_URL, AUTH0_CLIENT_ID, AUTH0_CLIENT_SECRET environment variables'
+          envCheck,
+          hint: 'Check that URLs have https:// prefix and no trailing slashes'
         }),
         {
           status: 500,
