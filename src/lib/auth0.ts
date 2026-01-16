@@ -52,8 +52,8 @@ export async function requireAuth0User(): Promise<Auth0User> {
 export async function ensureUserProfile(
   userId: string,
   email?: string | null,
-  name?: string | null,
-  picture?: string | null
+  _name?: string | null,
+  _picture?: string | null
 ): Promise<UserProfile | null> {
   const supabase = createServiceRoleClient();
 

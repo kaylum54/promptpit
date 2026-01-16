@@ -18,10 +18,10 @@ export function UpgradePrompt({ limits }: UpgradePromptProps) {
       <div className="max-w-lg text-center">
         <div className="text-6xl mb-6">🚀</div>
         <h1 className="font-display text-3xl text-black mb-4">
-          You've used your free PRD this month
+          You&apos;ve used your free PRD this month
         </h1>
         <p className="text-gray-500 mb-8">
-          You've created {limits.used} of {limits.limit} free PRDs.
+          You&apos;ve created {limits.used} of {limits.limit} free PRDs.
           {resetDateStr && ` Your limit resets on ${resetDateStr}.`}
         </p>
 

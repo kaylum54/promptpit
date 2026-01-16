@@ -45,7 +45,7 @@ export function DebugPrompts({ prdTitle, techStack }: DebugPromptsProps) {
 
       {/* Template selection */}
       <div className="mb-4">
-        <label className="text-sm text-gray-600 mb-2 block">What's the issue?</label>
+        <label className="text-sm text-gray-600 mb-2 block">What&apos;s the issue?</label>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
           {Object.entries(debugTemplates).map(([key, template]) => (
             <button

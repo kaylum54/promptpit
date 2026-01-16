@@ -11,7 +11,7 @@ export function SecurityChecklist({ currentPhase = 'all' }: SecurityChecklistPro
   const [checkedItems, setCheckedItems] = useState<Set<string>>(new Set());
 
   const relevantChecklists = Object.entries(securityChecklists).filter(
-    ([key, checklist]) => {
+    ([, checklist]) => {
       if (currentPhase === 'all') return true;
       return checklist.phase.toLowerCase().includes(currentPhase.toLowerCase());
     }
