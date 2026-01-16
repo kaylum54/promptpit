@@ -12,7 +12,23 @@ export async function middleware(request: NextRequest) {
 
   // Let Auth0 handle auth routes
   if (pathname.startsWith('/auth/')) {
-    return auth0.middleware(request);
+    try {
+      return await auth0.middleware(request);
+    } catch (error) {
+      console.error('Auth0 middleware error:', error);
+      // Return a more helpful error page
+      return new NextResponse(
+        JSON.stringify({
+          error: 'Authentication error',
+          message: error instanceof Error ? error.message : 'Unknown error',
+          hint: 'Check AUTH0_SECRET, AUTH0_BASE_URL, AUTH0_ISSUER_BASE_URL, AUTH0_CLIENT_ID, AUTH0_CLIENT_SECRET environment variables'
+        }),
+        {
+          status: 500,
+          headers: { 'Content-Type': 'application/json' }
+        }
+      );
+    }
   }
 
   // Get session for other routes
