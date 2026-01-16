@@ -1,8 +1,18 @@
 import { Auth0Client } from '@auth0/nextjs-auth0/server';
 import { createServiceRoleClient, type Database } from './supabase';
 
-// Create the Auth0 client instance
+// Extract domain from issuer URL (remove https:// prefix if present)
+const issuerBaseUrl = process.env.AUTH0_ISSUER_BASE_URL || '';
+const domain = issuerBaseUrl.replace(/^https?:\/\//, '');
+
+// Create the Auth0 client instance with explicit configuration
+// This avoids issues with environment variable auto-detection in edge runtime
 export const auth0 = new Auth0Client({
+  domain: domain,
+  clientId: process.env.AUTH0_CLIENT_ID!,
+  clientSecret: process.env.AUTH0_CLIENT_SECRET!,
+  appBaseUrl: process.env.AUTH0_BASE_URL!,
+  secret: process.env.AUTH0_SECRET!,
   authorizationParameters: {
     scope: 'openid profile email',
   },
