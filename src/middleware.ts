@@ -24,12 +24,23 @@ export async function middleware(request: NextRequest) {
         AUTH0_CLIENT_ID: !!process.env.AUTH0_CLIENT_ID ? `set (${process.env.AUTH0_CLIENT_ID?.length} chars)` : 'MISSING',
         AUTH0_CLIENT_SECRET: !!process.env.AUTH0_CLIENT_SECRET ? `set (${process.env.AUTH0_CLIENT_SECRET?.length} chars)` : 'MISSING',
       };
+      // Debug: Request details
+      const requestInfo = {
+        url: request.url,
+        nextUrl: request.nextUrl.toString(),
+        pathname: request.nextUrl.pathname,
+        host: request.headers.get('host'),
+        xForwardedHost: request.headers.get('x-forwarded-host'),
+        xForwardedProto: request.headers.get('x-forwarded-proto'),
+      };
       // Return a more helpful error page
       return new NextResponse(
         JSON.stringify({
           error: 'Authentication error',
           message: error instanceof Error ? error.message : 'Unknown error',
+          stack: error instanceof Error ? error.stack : undefined,
           envCheck,
+          requestInfo,
           hint: 'Check that URLs have https:// prefix and no trailing slashes'
         }),
         {
